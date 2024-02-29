@@ -1,35 +1,42 @@
 import { get, set } from "idb-keyval";
 
 export class FileManager {
-  public isFolderOpen: boolean = false;
   private _directoryHandle: FileSystemDirectoryHandle | undefined;
+  private _isFolderOpen = false;
 
   constructor() {
+  }
+
+  public async isFolderLoaded(): Promise<boolean> {
+    if (this._isFolderOpen) {
+      return true;
+    }
     try {
-      get("directory").then((directoryHandleOrUndefined) => {
-        if (directoryHandleOrUndefined) {
-          this._directoryHandle = directoryHandleOrUndefined;
-          this.isFolderOpen = true;
-          return;
-        }
-      });
+      this._directoryHandle = await get("directory");
+      if (this._directoryHandle) {
+        this._isFolderOpen = true;
+        return true;
+      }
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.log(error.name, error.message);
       }
     }
+    return false;
   }
 
-  public async openFolder() {
+  public async openFolder(): Promise<boolean> {
     try {
       const directoryHandle = await window.showDirectoryPicker();
       await set("directory", directoryHandle);
+      console.log("Directory handle", await get("directory"));
       this._directoryHandle = directoryHandle;
-      this.isFolderOpen = true;
+      return true;
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.log(error.name, error.message);
       }
     }
+    return false;
   }
 }
