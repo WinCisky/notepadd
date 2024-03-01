@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { base } from "$app/paths";
 	async function handleFiles() {
 		try {
 			// @ts-ignore
@@ -18,5 +19,5 @@
 <div class="px-6 py-10 flex flex-col gap-4 justify-center items-center w-full">
 	<h1 class="text-3xl font-bold underline w-fit">Hello world!</h1>
 
-	<a href="/editor" class="btn w-fit">Go to Editor</a>
+	<a href="{base}/editor" class="btn w-fit">Go to Editor</a>
 </div>
