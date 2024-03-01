@@ -13,40 +13,56 @@
 	onMount(async () => {
 		folderSelected = await filemanager.isFolderLoaded();
 
+		if (folderSelected) {
+			if (!(await filemanager.hasPermission())) {
+				// TODO: show permission modal
+				const permission_modal = document.getElementById('permission_modal') as HTMLDialogElement;
+				permission_modal.showModal();
+			}
+			filemanager.getFoldersAndFiles();
+		}
+
 		isLoading = false;
 	});
 
-	function divideMarkdown(content: string) {
-		const mdParser = md();
-		const tokens = mdParser.parse(content, {});
-
-		// divide the tokens into sections
-		let sections = [];
-		let currentSection = [];
-		for (let i = 0; i < tokens.length; i++) {
-			if (tokens[i].type === 'heading_open') {
-				if (currentSection.length > 0) {
-					sections.push(currentSection);
-					currentSection = [];
-				}
-			}
-			currentSection.push(tokens[i]);
-		}
-		sections.push(currentSection);
-
-		// convert the sections into html
-		let htmlSections = [];
-		for (let i = 0; i < sections.length; i++) {
-			let html = '';
-			for (let j = 0; j < sections[i].length; j++) {
-				html += mdParser.renderer.render([sections[i][j]], mdParser.options, {});
-			}
-			htmlSections.push(html);
-		}
-
-		// render
-		renderedContent = htmlSections.join('');
+	async function askPermission() {
+		await filemanager.askPermission();
+		const permission_modal = document.getElementById('permission_modal') as HTMLDialogElement;
+		permission_modal.close();
+		filemanager.getFoldersAndFiles();
 	}
+
+	// function divideMarkdown(content: string) {
+	// 	const mdParser = md();
+	// 	const tokens = mdParser.parse(content, {});
+
+	// 	// divide the tokens into sections
+	// 	let sections = [];
+	// 	let currentSection = [];
+	// 	for (let i = 0; i < tokens.length; i++) {
+	// 		if (tokens[i].type === 'heading_open') {
+	// 			if (currentSection.length > 0) {
+	// 				sections.push(currentSection);
+	// 				currentSection = [];
+	// 			}
+	// 		}
+	// 		currentSection.push(tokens[i]);
+	// 	}
+	// 	sections.push(currentSection);
+
+	// 	// convert the sections into html
+	// 	let htmlSections = [];
+	// 	for (let i = 0; i < sections.length; i++) {
+	// 		let html = '';
+	// 		for (let j = 0; j < sections[i].length; j++) {
+	// 			html += mdParser.renderer.render([sections[i][j]], mdParser.options, {});
+	// 		}
+	// 		htmlSections.push(html);
+	// 	}
+
+	// 	// render
+	// 	renderedContent = htmlSections.join('');
+	// }
 
 	async function openFolder() {
 		folderSelected = await filemanager.openFolder();
@@ -57,6 +73,19 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<link rel="stylesheet" href="github-markdown.css" />
 </svelte:head>
+
+<dialog id="permission_modal" class="modal">
+	<div class="modal-box">
+		<h3 class="font-bold text-lg">No local file access</h3>
+		<p class="py-4">May I have your permission to access your local files?</p>
+		<div class="modal-action">
+			<form method="dialog">
+				<button class="btn">Cancel</button>
+			</form>
+			<button class="btn" on:click={askPermission}>Ok</button>
+		</div>
+	</div>
+</dialog>
 
 <div class="drawer min-h-screen bg-base-200 lg:drawer-open">
 	<input id="my-drawer" type="checkbox" class="drawer-toggle" />
@@ -124,9 +153,7 @@
 					</li>
 				</ul>
 			{:else if isLoading}
-				<button class="btn skeleton mt-4">
-					Loading...
-				</button>
+				<button class="btn skeleton mt-4"> Loading... </button>
 			{:else}
 				<button class="btn btn-outline mt-4" on:click={openFolder}>
 					<FolderPlus />
