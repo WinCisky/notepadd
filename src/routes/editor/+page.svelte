@@ -1,25 +1,27 @@
 <script lang="ts">
 	import md from 'markdown-it';
 	import { onMount } from 'svelte';
-	import { FileManager } from '$lib/filemanager';
+	import { FileManager, type TreeNode } from '$lib/filemanager';
 	import Notepad from '$lib/icons/Notepad.svelte';
 	import FolderPlus from '$lib/icons/FolderPlus.svelte';
+	import MenuFolder from '$lib/components/MenuFolder.svelte';
 
 	let filemanager = new FileManager();
 	let renderedContent = '';
 	let folderSelected = false;
 	let isLoading = true;
+	let fileTree: TreeNode | undefined;
 
 	onMount(async () => {
 		folderSelected = await filemanager.isFolderLoaded();
 
 		if (folderSelected) {
 			if (!(await filemanager.hasPermission())) {
-				// TODO: show permission modal
 				const permission_modal = document.getElementById('permission_modal') as HTMLDialogElement;
 				permission_modal.showModal();
 			}
-			filemanager.getFoldersAndFiles();
+			await filemanager.getFoldersAndFiles();
+			fileTree = filemanager.root;
 		}
 
 		isLoading = false;
@@ -29,7 +31,8 @@
 		await filemanager.askPermission();
 		const permission_modal = document.getElementById('permission_modal') as HTMLDialogElement;
 		permission_modal.close();
-		filemanager.getFoldersAndFiles();
+		await filemanager.getFoldersAndFiles();
+		fileTree = filemanager.root;
 	}
 
 	// function divideMarkdown(content: string) {
@@ -99,58 +102,18 @@
 	<aside class="drawer-side z-10">
 		<label for="my-drawer" class="drawer-overlay"></label>
 		<!-- sidebar menu -->
-		<nav class="flex min-h-screen w-72 flex-col gap-2 overflow-y-auto bg-base-100 px-6 py-10">
+		<nav class="flex min-h-screen min-w-72 w-fit flex-col gap-2 overflow-y-auto bg-base-100 px-6 py-10">
 			<div class="mx-4 flex items-center gap-2 font-black">
 				<Notepad />
 				Notepadd
 			</div>
 			{#if folderSelected}
 				<ul class="menu">
-					<li>
-						<button class="active">
-							<svg data-src="https://unpkg.com/heroicons/20/solid/home.svg" class="h-5 w-5"></svg>
-							Dashboard
-						</button>
-					</li>
-					<li>
-						<button>
-							<svg data-src="https://unpkg.com/heroicons/20/solid/user.svg" class="h-5 w-5"></svg>
-							Users
-						</button>
-					</li>
-					<li>
-						<details>
-							<summary>
-								<svg
-									data-src="https://unpkg.com/heroicons/20/solid/adjustments-vertical.svg"
-									class="h-5 w-5"
-								></svg>
-								Settings
-							</summary>
-							<ul>
-								<li><button>General</button></li>
-								<li><button>Themes</button></li>
-								<li><button>Routes</button></li>
-								<li><button>Comments</button></li>
-								<li><button>Media</button></li>
-								<li><button>Roles</button></li>
-								<li><button>Merchants</button></li>
-								<li>
-									<button>Tools</button>
-									<ul>
-										<li><button>Files</button></li>
-										<li><button>Scripts</button></li>
-										<li><button>Suggestions</button></li>
-									</ul>
-								</li>
-								<li><button>Databases</button></li>
-								<li><button>Gateways</button></li>
-								<li><button>Plugins</button></li>
-								<li><button>API</button></li>
-								<li><button>Support</button></li>
-							</ul>
-						</details>
-					</li>
+					{#if fileTree}
+						<MenuFolder node={fileTree} open={true} />
+					{:else}
+						<li>No files found</li>
+					{/if}
 				</ul>
 			{:else if isLoading}
 				<button class="btn skeleton mt-4"> Loading... </button>

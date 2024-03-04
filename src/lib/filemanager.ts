@@ -1,8 +1,17 @@
 import { get, set } from "idb-keyval";
 
+export interface TreeNode {
+  name: string;
+  id: number;
+  type: "file" | "folder";
+  handle: FileSystemDirectoryHandle | FileSystemFileHandle;
+  children: TreeNode[];
+}
+
 export class FileManager {
   private _directoryHandle: FileSystemDirectoryHandle | undefined;
   private _isFolderOpen = false;
+  public root: TreeNode | undefined;
 
   constructor() {
   }
@@ -51,7 +60,20 @@ export class FileManager {
       return;
     }
 
-    const folders: FileSystemDirectoryHandle[] = [this._directoryHandle];
+    this.root = {
+      id: 0,
+      name: this._directoryHandle.name,
+      type: "folder",
+      handle: this._directoryHandle,
+      children: [] as TreeNode[],
+    };
+
+    const folders: { handle: FileSystemDirectoryHandle, children: TreeNode[] }[] = [{ 
+      handle: this._directoryHandle, 
+      children: this.root.children
+    }];
+
+    let idx = 0;
 
     do {
       const folder = folders.pop();
@@ -59,13 +81,31 @@ export class FileManager {
         break;
       }
 
-      for await (const entry of folder.values()) {
+      for await (const entry of folder.handle.values()) {
+        idx++;
         if (entry.kind === "file") {
-          // files.push(entry as FileSystemFileHandle);
           const fileHandle = entry as FileSystemFileHandle;
-          console.log(folder.name, fileHandle.name);
+          folder.children.push({ 
+            id: idx,
+            name: fileHandle.name, 
+            type: "file",
+            handle: fileHandle,
+            children: [] 
+          });
         } else if (entry.kind === "directory") {
-          folders.push(entry as FileSystemDirectoryHandle);
+          const dirHandle = entry as FileSystemDirectoryHandle;
+          const dirNode: TreeNode = { 
+            id: idx,
+            name: dirHandle.name, 
+            type: "folder",
+            handle: dirHandle,
+            children: [] 
+          };
+          folder.children.push(dirNode);
+          folders.push({ 
+            handle: dirHandle, 
+            children: dirNode.children 
+          });
         }
       }
     } while (folders.length > 0);
@@ -80,7 +120,7 @@ export class FileManager {
       console.log("No permission to read folder");
       return;
     }
-    this.getFiles();
+    await this.getFiles();
   }
 
   public async hasPermission() {
