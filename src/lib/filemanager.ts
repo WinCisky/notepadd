@@ -50,7 +50,7 @@ export class FileManager {
   }
 
   // iteratively list all files inside of folder with subfolder and subfiles
-  public async getFiles() {
+  public async getFiles(): Promise<void> {
     if (!this._directoryHandle) {
       return;
     }
@@ -68,8 +68,8 @@ export class FileManager {
       children: [] as TreeNode[],
     };
 
-    const folders: { handle: FileSystemDirectoryHandle, children: TreeNode[] }[] = [{ 
-      handle: this._directoryHandle, 
+    const folders: { handle: FileSystemDirectoryHandle, children: TreeNode[] }[] = [{
+      handle: this._directoryHandle,
       children: this.root.children
     }];
 
@@ -85,26 +85,26 @@ export class FileManager {
         idx++;
         if (entry.kind === "file") {
           const fileHandle = entry as FileSystemFileHandle;
-          folder.children.push({ 
+          folder.children.push({
             id: idx,
-            name: fileHandle.name, 
+            name: fileHandle.name,
             type: "file",
             handle: fileHandle,
-            children: [] 
+            children: []
           });
         } else if (entry.kind === "directory") {
           const dirHandle = entry as FileSystemDirectoryHandle;
-          const dirNode: TreeNode = { 
+          const dirNode: TreeNode = {
             id: idx,
-            name: dirHandle.name, 
+            name: dirHandle.name,
             type: "folder",
             handle: dirHandle,
-            children: [] 
+            children: []
           };
           folder.children.push(dirNode);
-          folders.push({ 
-            handle: dirHandle, 
-            children: dirNode.children 
+          folders.push({
+            handle: dirHandle,
+            children: dirNode.children
           });
         }
       }
@@ -123,11 +123,12 @@ export class FileManager {
     await this.getFiles();
   }
 
-  public async hasPermission() {
+  public async hasPermission(): Promise<boolean> {
     if (!this._directoryHandle) {
       return false;
     }
-    return await this.verifyFolderPermission(this._directoryHandle, true);
+    const hasFolderPermission = await this.verifyFolderPermission(this._directoryHandle, true);
+    return hasFolderPermission;
   }
 
   public async askPermission() {
@@ -154,13 +155,17 @@ export class FileManager {
     return false;
   }
 
-  private async verifyFolderPermission(directoryHandle: FileSystemDirectoryHandle, readWrite: boolean, askPermission = false) {
+  private async verifyFolderPermission(
+    directoryHandle: FileSystemDirectoryHandle,
+    readWrite: boolean, askPermission = false
+  ): Promise<boolean> {
     const options: FileSystemHandlePermissionDescriptor = {};
     if (readWrite) {
       options.mode = 'readwrite';
     }
     // Check if permission was already granted. If so, return true.
-    if ((await directoryHandle.queryPermission(options)) === 'granted') {
+    let permission = await directoryHandle.queryPermission(options);
+    if (permission === 'granted') {
       return true;
     }
     if (!askPermission) {

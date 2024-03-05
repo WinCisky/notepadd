@@ -20,4 +20,5 @@
 	<h1 class="text-3xl font-bold underline w-fit">Hello world!</h1>
 
 	<a href="{base}/editor" class="btn w-fit">Go to Editor</a>
+	<a href="{base}/test" class="btn w-fit">Go to Test</a>
 </div>

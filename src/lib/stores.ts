@@ -1,3 +1,4 @@
 import { writable } from 'svelte/store';
+import type { TreeNode } from './filemanager';
 
-export const selectedItemId = writable(0);
+export const openFile = writable<TreeNode | null>(null);

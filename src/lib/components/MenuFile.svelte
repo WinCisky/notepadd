@@ -1,18 +1,18 @@
 <script lang="ts">
 	import { type TreeNode } from '$lib/filemanager';
-    import { selectedItemId } from '$lib/stores';
+	import { openFile } from '$lib/stores';
 
 	export let node: TreeNode;
 
-    $: selected = $selectedItemId === node.id;
+	$: selected = $openFile?.id === node.id;
 
-    function selectFile() {
-        selectedItemId.set(node.id);
-    }
+	function selectFile() {
+		openFile.set(node);
+	}
 </script>
 
 <li>
-    <button class="{selected ? 'active' : ''}" on:click={selectFile}>
-        {node.name}
-    </button>
+	<button class={selected ? 'active' : ''} on:click={selectFile}>
+		{node.name}
+	</button>
 </li>

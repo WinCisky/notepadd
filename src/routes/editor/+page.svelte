@@ -5,6 +5,7 @@
 	import Notepad from '$lib/icons/Notepad.svelte';
 	import FolderPlus from '$lib/icons/FolderPlus.svelte';
 	import MenuFolder from '$lib/components/MenuFolder.svelte';
+	import { openFile } from '$lib/stores';
 
 	let filemanager = new FileManager();
 	let renderedContent = '';
@@ -12,63 +13,47 @@
 	let isLoading = true;
 	let fileTree: TreeNode | undefined;
 
+	$: {
+		if ($openFile) {
+			openFileChange($openFile!);
+		}
+	}
+
 	onMount(async () => {
 		folderSelected = await filemanager.isFolderLoaded();
 
 		if (folderSelected) {
-			if (!(await filemanager.hasPermission())) {
+			const hasPermission = await filemanager.hasPermission();
+			if (!hasPermission) {
 				const permission_modal = document.getElementById('permission_modal') as HTMLDialogElement;
 				permission_modal.showModal();
 			}
 			await filemanager.getFoldersAndFiles();
 			fileTree = filemanager.root;
 		}
-
 		isLoading = false;
 	});
 
 	async function askPermission() {
+		isLoading = true;
 		await filemanager.askPermission();
 		const permission_modal = document.getElementById('permission_modal') as HTMLDialogElement;
 		permission_modal.close();
 		await filemanager.getFoldersAndFiles();
 		fileTree = filemanager.root;
+		isLoading = false;
 	}
-
-	// function divideMarkdown(content: string) {
-	// 	const mdParser = md();
-	// 	const tokens = mdParser.parse(content, {});
-
-	// 	// divide the tokens into sections
-	// 	let sections = [];
-	// 	let currentSection = [];
-	// 	for (let i = 0; i < tokens.length; i++) {
-	// 		if (tokens[i].type === 'heading_open') {
-	// 			if (currentSection.length > 0) {
-	// 				sections.push(currentSection);
-	// 				currentSection = [];
-	// 			}
-	// 		}
-	// 		currentSection.push(tokens[i]);
-	// 	}
-	// 	sections.push(currentSection);
-
-	// 	// convert the sections into html
-	// 	let htmlSections = [];
-	// 	for (let i = 0; i < sections.length; i++) {
-	// 		let html = '';
-	// 		for (let j = 0; j < sections[i].length; j++) {
-	// 			html += mdParser.renderer.render([sections[i][j]], mdParser.options, {});
-	// 		}
-	// 		htmlSections.push(html);
-	// 	}
-
-	// 	// render
-	// 	renderedContent = htmlSections.join('');
-	// }
 
 	async function openFolder() {
 		folderSelected = await filemanager.openFolder();
+		if (folderSelected) {
+			await filemanager.getFoldersAndFiles();
+			fileTree = filemanager.root;
+		}
+	}
+
+	async function openFileChange(node: TreeNode) {
+		console.log('open file change', node);
 	}
 </script>
 
@@ -102,21 +87,23 @@
 	<aside class="drawer-side z-10">
 		<label for="my-drawer" class="drawer-overlay"></label>
 		<!-- sidebar menu -->
-		<nav class="flex min-h-screen min-w-72 w-fit flex-col gap-2 overflow-y-auto bg-base-100 px-6 py-10">
+		<nav
+			class="flex min-h-screen min-w-72 w-fit flex-col gap-2 overflow-y-auto bg-base-100 px-6 py-10"
+		>
 			<div class="mx-4 flex items-center gap-2 font-black">
 				<Notepad />
 				Notepadd
 			</div>
-			{#if folderSelected}
+			{#if isLoading}
+				<button class="btn skeleton mt-4"> Loading... </button>
+			{:else if folderSelected}
 				<ul class="menu">
 					{#if fileTree}
 						<MenuFolder node={fileTree} open={true} />
 					{:else}
-						<li>No files found</li>
+						<li class="mt-4">No files found</li>
 					{/if}
 				</ul>
-			{:else if isLoading}
-				<button class="btn skeleton mt-4"> Loading... </button>
 			{:else}
 				<button class="btn btn-outline mt-4" on:click={openFolder}>
 					<FolderPlus />
