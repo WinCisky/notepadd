@@ -1,4 +1,6 @@
 import { get, set } from "idb-keyval";
+import { nodeId } from "./stores";
+import { get as getStore } from "svelte/store";
 
 export interface TreeNode {
   name: string;
@@ -61,7 +63,7 @@ export class FileManager {
     }
 
     this.root = {
-      id: 0,
+      id: getStore(nodeId),
       name: this._directoryHandle.name,
       type: "folder",
       handle: this._directoryHandle,
@@ -73,8 +75,6 @@ export class FileManager {
       children: this.root.children
     }];
 
-    let idx = 0;
-
     do {
       const folder = folders.pop();
       if (!folder) {
@@ -82,11 +82,11 @@ export class FileManager {
       }
 
       for await (const entry of folder.handle.values()) {
-        idx++;
+        nodeId.update((n) => n + 1);
         if (entry.kind === "file") {
           const fileHandle = entry as FileSystemFileHandle;
           folder.children.push({
-            id: idx,
+            id: getStore(nodeId),
             name: fileHandle.name,
             type: "file",
             handle: fileHandle,
@@ -95,7 +95,7 @@ export class FileManager {
         } else if (entry.kind === "directory") {
           const dirHandle = entry as FileSystemDirectoryHandle;
           const dirNode: TreeNode = {
-            id: idx,
+            id: getStore(nodeId),
             name: dirHandle.name,
             type: "folder",
             handle: dirHandle,
@@ -108,7 +108,41 @@ export class FileManager {
           });
         }
       }
-    } while (folders.length > 0);
+    } while (folders.length > 0 && false); // only one level deep
+  }
+
+  public async getFolderContent(folder: FileSystemDirectoryHandle): Promise<TreeNode[] | false> {
+    const hasPermission = await this.verifyFolderPermission(folder, false);
+    if (!hasPermission) {
+      console.log("No permission to read folder");
+      return false;
+    }
+
+    const children: TreeNode[] = [];
+    // get children of folder
+    for await (const entry of folder.values()) {
+      nodeId.update((n) => n + 1);
+      if (entry.kind === "file") {
+        const fileHandle = entry as FileSystemFileHandle;
+        children.push({
+          id: getStore(nodeId),
+          name: fileHandle.name,
+          type: "file",
+          handle: fileHandle,
+          children: []
+        });
+      } else if (entry.kind === "directory") {
+        const dirHandle = entry as FileSystemDirectoryHandle;
+        children.push({
+          id: getStore(nodeId),
+          name: dirHandle.name,
+          type: "folder",
+          handle: dirHandle,
+          children: []
+        });
+      }
+    }
+    return children;
   }
 
   public async getFoldersAndFiles() {

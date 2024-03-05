@@ -1,14 +1,28 @@
 <script lang="ts">
-	import { type TreeNode } from '$lib/filemanager';
+	import { FileManager, type TreeNode } from '$lib/filemanager';
 	import MenuFile from './MenuFile.svelte';
     import MenuFolder from './MenuFolder.svelte';
 
 	export let node: TreeNode;
     export let open = false;
+    export let folderContentLoaded = false;
+    export let filemanager: FileManager;
+
+    $: children = node.children;
+
+    $: if (open && !folderContentLoaded) {
+        folderContentLoaded = true;
+        if (node.type === 'folder' && node.handle instanceof FileSystemDirectoryHandle){
+            filemanager.getFolderContent(node.handle).then((content) => {
+                if (!content) return;
+                node.children = content;
+            });
+        }
+    }
 </script>
 
 <li>
-    <details open={open}>
+    <details bind:open={open}>
         <summary>
             {node.name}
         </summary>
@@ -17,7 +31,7 @@
                 {#if child.type === 'file'}
                     <MenuFile node={child} />
                 {:else if child.type === 'folder'}
-                    <MenuFolder node={child} />
+                    <MenuFolder node={child} filemanager={filemanager} />
                 {/if}
             {/each}
         </ul>

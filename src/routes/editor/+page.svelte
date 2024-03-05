@@ -99,7 +99,7 @@
 			{:else if folderSelected}
 				<ul class="menu">
 					{#if fileTree}
-						<MenuFolder node={fileTree} open={true} />
+						<MenuFolder node={fileTree} open={true} folderContentLoaded={true} {filemanager} />
 					{:else}
 						<li class="mt-4">No files found</li>
 					{/if}
