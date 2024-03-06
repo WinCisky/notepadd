@@ -111,6 +111,18 @@ export class FileManager {
     } while (folders.length > 0 && false); // only one level deep
   }
 
+  public async getFileContent(file: FileSystemFileHandle): Promise<string | false> {
+    const hasPermission = await this.verifyFilePermission(file, false);
+    if (!hasPermission) {
+      console.log("No permission to read file");
+      return false;
+    }
+
+    const fileContent = await file.getFile();
+    const content = await fileContent.text();
+    return content;
+  }
+
   public async getFolderContent(folder: FileSystemDirectoryHandle): Promise<TreeNode[] | false> {
     const hasPermission = await this.verifyFolderPermission(folder, false);
     if (!hasPermission) {

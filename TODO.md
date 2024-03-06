@@ -1,9 +1,12 @@
 ## TODO
 
-- [x] open only first level of folder on start
-- [x] open subsequent levels of folder on click on folder
-- [ ] integrate quill in editor page
-- [ ] load markdown file in editor on click
-- [ ] save/update modified markdown file aster 5s debounce in editor
-- [ ] add a button to create new markdown file
+- [ ] read and add link to html with markdown-it
+- [ ] tooltip with btn to change the style
+    - [ ] test link
+    - [ ] add link
+- [ ] code block with syntax highlight
+- [ ] save changes to file
+- [ ] move blocks
+- [ ] create file btn
 - [ ] slash commands
+- [ ] image drag & drop

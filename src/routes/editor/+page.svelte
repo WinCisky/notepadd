@@ -5,7 +5,9 @@
 	import Notepad from '$lib/icons/Notepad.svelte';
 	import FolderPlus from '$lib/icons/FolderPlus.svelte';
 	import MenuFolder from '$lib/components/MenuFolder.svelte';
+	import Plus from '$lib/icons/Plus.svelte';
 	import { openFile } from '$lib/stores';
+	import TipTap from "$lib/components/TipTap.svelte";
 
 	let filemanager = new FileManager();
 	let renderedContent = '';
@@ -54,6 +56,22 @@
 
 	async function openFileChange(node: TreeNode) {
 		console.log('open file change', node);
+		if (node.type === 'file') {
+			if (node.handle instanceof FileSystemFileHandle) {
+				const file = await node.handle.getFile();
+				const content = await file.text();
+				if (file.name.endsWith('.md')) {
+					renderedContent = md().render(content);
+				} else {
+					// TODO: handle other file types
+					renderedContent = content;
+				}
+			}
+		}
+	}
+
+	async function createNewFile() {
+		// TODO
 	}
 </script>
 
@@ -78,11 +96,7 @@
 <div class="drawer min-h-screen bg-base-200 lg:drawer-open">
 	<input id="my-drawer" type="checkbox" class="drawer-toggle" />
 	<main class="drawer-content">
-		<div
-			class="markdown-body px-6 py-10 h-full"
-			contenteditable
-			bind:innerHTML={renderedContent}
-		></div>
+		<TipTap bind:content={renderedContent} />
 	</main>
 	<aside class="drawer-side z-10">
 		<label for="my-drawer" class="drawer-overlay"></label>
@@ -102,6 +116,11 @@
 						<MenuFolder node={fileTree} open={true} folderContentLoaded={true} {filemanager} />
 					{:else}
 						<li class="mt-4">No files found</li>
+						<li class="mt-4">
+							<button class="btn btn-sm btn-circle" on:click={createNewFile}>
+								<Plus />
+							</button>
+						</li>
 					{/if}
 				</ul>
 			{:else}
