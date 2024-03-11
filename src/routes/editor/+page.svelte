@@ -7,7 +7,6 @@
 	import MenuFolder from '$lib/components/MenuFolder.svelte';
 	import Plus from '$lib/icons/Plus.svelte';
 	import { openFile } from '$lib/stores';
-	import TipTap from "$lib/components/TipTap.svelte";
 
 	let filemanager = new FileManager();
 	let renderedContent = '';
@@ -96,7 +95,7 @@
 <div class="drawer min-h-screen bg-base-200 lg:drawer-open">
 	<input id="my-drawer" type="checkbox" class="drawer-toggle" />
 	<main class="drawer-content">
-		<TipTap bind:content={renderedContent} />
+		
 	</main>
 	<aside class="drawer-side z-10">
 		<label for="my-drawer" class="drawer-overlay"></label>
