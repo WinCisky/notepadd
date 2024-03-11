@@ -1,8 +1,25 @@
 ## TODO
 
-- [ ] code block with syntax highlight
-- [ ] save changes to file
-- [ ] move blocks
-- [ ] create file btn
-- [ ] slash commands
-- [ ] image drag & drop
+- styling
+- save to json file
+- load from json file
+
+## Backlog
+
+- add missing elements
+    - image
+    - table
+
+- extend elements
+    - syntax highlighting to code block
+    - drag & drop to move blocks
+    - add link to page
+    - image drag & drop
+
+- implement new elements
+    - add new page
+
+- implement features
+    - search
+    - import from markdown
+    - export to markdown

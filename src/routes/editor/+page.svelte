@@ -7,6 +7,12 @@
 	import MenuFolder from '$lib/components/MenuFolder.svelte';
 	import Plus from '$lib/icons/Plus.svelte';
 	import { openFile } from '$lib/stores';
+	import EditorJS from '@editorjs/editorjs';
+	import Header from '@editorjs/header';
+	import NestedList from '@editorjs/nested-list';
+	import Checklist from '@editorjs/checklist'
+	import CodeTool from '@editorjs/code';
+	import InlineCode from '@editorjs/inline-code';
 
 	let filemanager = new FileManager();
 	let renderedContent = '';
@@ -33,6 +39,17 @@
 			fileTree = filemanager.root;
 		}
 		isLoading = false;
+
+		const editor = new EditorJS({
+			holder: 'editorjs',
+			tools: {
+				header: Header,
+				nestedList: NestedList,
+				checklist: Checklist,
+				code: CodeTool,
+				inlineCode: InlineCode,
+			},
+		});
 	});
 
 	async function askPermission() {
@@ -76,7 +93,7 @@
 
 <svelte:head>
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<link rel="stylesheet" href="github-markdown.css" />
+	<link rel="stylesheet" href="github-markdown-light.css" />
 </svelte:head>
 
 <dialog id="permission_modal" class="modal">
@@ -95,7 +112,7 @@
 <div class="drawer min-h-screen bg-base-200 lg:drawer-open">
 	<input id="my-drawer" type="checkbox" class="drawer-toggle" />
 	<main class="drawer-content">
-		
+		<div id="editorjs" class="markdown-body h-full p-4 md:p-8"></div>
 	</main>
 	<aside class="drawer-side z-10">
 		<label for="my-drawer" class="drawer-overlay"></label>
