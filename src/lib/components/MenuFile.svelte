@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { type TreeNode } from '$lib/filemanager';
 	import { openFile } from '$lib/stores';
+	import File from '$lib/icons/File.svelte';
 
 	export let node: TreeNode;
 
@@ -13,6 +14,7 @@
 
 <li>
 	<button class={selected ? 'active' : ''} on:click={selectFile}>
+		<File />
 		{node.name}
 	</button>
 </li>

@@ -51,6 +51,19 @@ export class FileManager {
     return false;
   }
 
+  public async getNewFileHandle() {
+    const options: SaveFilePickerOptions = {
+    types: [
+      {
+      description: 'Text Files',
+      accept: { 'text/plain': ['.json'] as `.${string}`[] },
+      },
+    ],
+    };
+    const handle = await window.showSaveFilePicker(options);
+    return handle;
+  }
+
   // iteratively list all files inside of folder with subfolder and subfiles
   public async getFiles(): Promise<void> {
     if (!this._directoryHandle) {

@@ -1,6 +1,5 @@
 ## TODO
 
-- styling
 - save to json file
 - load from json file
 
@@ -23,3 +22,5 @@
     - search
     - import from markdown
     - export to markdown
+
+- styling: dark theme for editorjs

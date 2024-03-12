@@ -2,6 +2,7 @@
 	import { FileManager, type TreeNode } from '$lib/filemanager';
 	import MenuFile from './MenuFile.svelte';
     import MenuFolder from './MenuFolder.svelte';
+	import Folder from '$lib/icons/Folder.svelte';
 
 	export let node: TreeNode;
     export let open = false;
@@ -24,6 +25,7 @@
 <li>
     <details bind:open={open}>
         <summary>
+            <Folder />
             {node.name}
         </summary>
         <ul>

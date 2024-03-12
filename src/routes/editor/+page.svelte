@@ -6,13 +6,9 @@
 	import FolderPlus from '$lib/icons/FolderPlus.svelte';
 	import MenuFolder from '$lib/components/MenuFolder.svelte';
 	import Plus from '$lib/icons/Plus.svelte';
+	import DocumentPlus from '$lib/icons/DocumentPlus.svelte';
 	import { openFile } from '$lib/stores';
-	import EditorJS from '@editorjs/editorjs';
-	import Header from '@editorjs/header';
-	import NestedList from '@editorjs/nested-list';
-	import Checklist from '@editorjs/checklist'
-	import CodeTool from '@editorjs/code';
-	import InlineCode from '@editorjs/inline-code';
+	import EditorJs from '$lib/icons/EditorJs.svelte';
 
 	let filemanager = new FileManager();
 	let renderedContent = '';
@@ -39,17 +35,6 @@
 			fileTree = filemanager.root;
 		}
 		isLoading = false;
-
-		const editor = new EditorJS({
-			holder: 'editorjs',
-			tools: {
-				header: Header,
-				nestedList: NestedList,
-				checklist: Checklist,
-				code: CodeTool,
-				inlineCode: InlineCode,
-			},
-		});
 	});
 
 	async function askPermission() {
@@ -87,7 +72,11 @@
 	}
 
 	async function createNewFile() {
-		// TODO
+		const file = await filemanager.getNewFileHandle();
+		if (file) {
+			await filemanager.getFoldersAndFiles();
+			fileTree = filemanager.root;
+		}
 	}
 </script>
 
@@ -112,7 +101,36 @@
 <div class="drawer min-h-screen bg-base-200 lg:drawer-open">
 	<input id="my-drawer" type="checkbox" class="drawer-toggle" />
 	<main class="drawer-content">
-		<div id="editorjs" class="markdown-body h-full p-4 md:p-8"></div>
+		{#if $openFile}
+			<EditorJs />
+		{:else}
+			<div class="flex items-center justify-center h-full">
+				<div class="text-center">
+					<h1 class="text-4xl font-bold">
+						{#if new Date().getHours() < 12}
+							Good morning,
+						{:else if new Date().getHours() < 18}
+							Good afternoon,
+						{:else}
+							Good evening,
+						{/if}
+					</h1>
+					{#if !folderSelected}
+						<p class="text-lg mt-4">create or choose a folder</p>
+						<button class="btn btn-outline mt-4" on:click={openFolder}>
+							<FolderPlus />
+							Select folder
+						</button>
+					{:else}
+						<p class="text-lg mt-4">select or create a file to get started</p>
+						<button class="btn btn-outline mt-4" on:click={createNewFile}>
+							<DocumentPlus />
+							New file
+						</button>
+					{/if}
+				</div>
+			</div>
+		{/if}
 	</main>
 	<aside class="drawer-side z-10">
 		<label for="my-drawer" class="drawer-overlay"></label>
