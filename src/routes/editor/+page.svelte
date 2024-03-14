@@ -56,7 +56,6 @@
 	}
 
 	async function openFileChange(node: TreeNode) {
-		console.log('open file change', node);
 		if (node.type === 'file') {
 			if (node.handle instanceof FileSystemFileHandle) {
 				const file = await node.handle.getFile();
@@ -130,6 +129,11 @@
 					{/if}
 				</div>
 			</div>
+		{/if}
+		{#if folderSelected}
+			<button class="btn btn-circle btn-outline absolute right-8 bottom-8 z-10" on:click={createNewFile}>
+				<DocumentPlus />
+			</button>
 		{/if}
 	</main>
 	<aside class="drawer-side z-10">

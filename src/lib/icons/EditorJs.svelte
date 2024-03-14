@@ -1,48 +1,172 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
+	import { onMount } from 'svelte';
+    import { writable, type Writable } from 'svelte/store';
+	import { openFile } from '$lib/stores';
 
-	import EditorJS from '@editorjs/editorjs';
+	import EditorJS, { type ToolConstructable } from '@editorjs/editorjs';
 	import Header from '@editorjs/header';
 	import NestedList from '@editorjs/nested-list';
-	import Checklist from '@editorjs/checklist'
+	import Checklist from '@editorjs/checklist';
 	import CodeTool from '@editorjs/code';
 	import InlineCode from '@editorjs/inline-code';
+    import ImageTool from '@editorjs/image';
+	import { FileManager, type TreeNode } from '$lib/filemanager';
 
-    let timeoutId: number;
+    type ToastType = 'info' | 'error' | 'success' | 'warning';
 
-    const editor = new EditorJS({
-        holder: 'editorjs',
-        autofocus: true,
-        tools: {
-            header: Header,
-            nestedList: NestedList,
-            checklist: Checklist,
-            code: CodeTool,
-            inlineCode: InlineCode,
-        },
-        onChange: editorChange
-    });
+    const toastTypeToClass = {
+        'info': 'alert-info',
+        'error': 'alert-error',
+        'success': 'alert-success',
+        'warning': 'alert-warning'
+    };
 
-    onMount(async () => {
+    interface ToastMessage {
+        id: number;
+        message: string;
+        type: ToastType;
+    }
+
+    const toasts: Writable<ToastMessage[]> = writable([]);
+
+	let fileWithError = false;
+	let previousOpenFile: TreeNode | null;
+
+	// on open file changes save the previous file and load the new file
+	$: if ($openFile && $openFile !== previousOpenFile) {
+		openFileChange();
+	}
+
+	const editor = new EditorJS({
+		holder: 'editorjs',
+		autofocus: true,
+		tools: {
+			header: {
+                // @ts-ignore
+                class: Header,
+                config: {
+                    levels: [1, 2, 3],
+                    defaultLevel: 1
+                }
+            },
+			nestedList: NestedList,
+			checklist: Checklist,
+			code: CodeTool,
+			inlineCode: InlineCode,
+            image: {
+                class: ImageTool,
+                config: {
+                    uploader: {
+                        uploadByFile(file: File): Promise<{success: number, file: {url: string}}> {
+                            return uploadImageByFile(file);
+                        },
+                        uploadByUrl(url: string): Promise<{success: number, file: {url: string}}> {
+                            return uploadImageByUrl(url);
+                        }
+                    }
+                }
+            }
+		},
+		onChange: editorChange
+	});
+
+	onMount(async () => {
+		await editor.isReady;
+	});
+
+    function showToast(message: string, type: ToastType, duration = 3000) {
+        const id = Date.now(); // good enough
+        toasts.update(toasts => [...toasts, { id, message, type: type }]);
+
+        setTimeout(() => {
+            toasts.update(toasts => toasts.filter(toast => toast.id !== id));
+        }, duration);
+    }
+
+    function clearToasts() {
+        toasts.set([]);
+    }
+
+	async function openFileChange() {
+        clearToasts();
+		if (!fileWithError && previousOpenFile) {
+			await save();
+		}
+		previousOpenFile = $openFile;
+		await loadFile();
+	}
+
+	function editorChange() {
+		save();
+	}
+
+    async function uploadImageByFile(file: File) {
         await editor.isReady;
-    });
-
-    function editorChange() {
-        debounceSave();
+        console.log(file);
+        return {
+            success: 1,
+            file: {
+                url: 'https://placehold.co/600x400',
+            }
+        };
     }
 
-    function debounceSave() {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(save, 2000);
+    async function uploadImageByUrl(url: string) {
+        await editor.isReady;
+        console.log(url);
+        return {
+            success: 1,
+            file: {
+                url: 'https://placehold.co/600x400',
+            }
+        };
     }
 
-    function save() {
-        editor.save().then((outputData) => {
-            console.log('Article data: ', outputData);
-            // TODO: save to disk
-        });
-    }
+	async function loadFile() {
+		await editor.isReady;
+		editor.clear();
+		await load();
+	}
 
+	async function save() {
+		if (fileWithError) return;
+		await editor.isReady;
+		const outputData = await editor.save();
+		if (
+			previousOpenFile &&
+			previousOpenFile.handle &&
+			previousOpenFile.handle instanceof FileSystemFileHandle
+		) {
+			FileManager.writeFile(previousOpenFile.handle, JSON.stringify(outputData));
+		}
+	}
+
+	async function load() {
+		fileWithError = true;
+		if ($openFile && $openFile.handle && $openFile.handle instanceof FileSystemFileHandle) {
+			const file = await $openFile.handle.getFile();
+			const contents = await file.text();
+            if (contents.length > 0) {
+                try {
+                    const data = JSON.parse(contents);
+                    editor.render(data);
+                    fileWithError = false;
+                } catch (e) {
+                    showToast(`File ${$openFile.name} is not a valid JSON file`, 'error');
+                }
+            } else {
+                // empty file
+                fileWithError = false;
+            }
+		}
+	}
 </script>
 
 <div id="editorjs" class="markdown-body h-full p-4 md:p-8"></div>
+<div class="toast toast-top toast-end z-20">
+    {#each $toasts as toast (toast.id)}
+        <div class="alert {toastTypeToClass[toast.type]}">
+            <span>{toast.message}</span>
+        </div>
+    {/each}
+</div>

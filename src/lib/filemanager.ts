@@ -122,6 +122,17 @@ export class FileManager {
         }
       }
     } while (folders.length > 0 && false); // only one level deep
+
+    // sort alphabetically with folders first
+    this.root.children.sort((a, b) => {
+      if (a.type === "folder" && b.type === "file") {
+        return -1;
+      }
+      if (a.type === "file" && b.type === "folder") {
+        return 1;
+      }
+      return a.name.localeCompare(b.name);
+    });
   }
 
   public async getFileContent(file: FileSystemFileHandle): Promise<string | false> {
@@ -236,5 +247,14 @@ export class FileManager {
     }
     // The user didn't grant permission, so return false.
     return false;
+  }
+
+  public static async writeFile(fileHandle: FileSystemFileHandle, contents: string) {
+    // Create a FileSystemWritableFileStream to write to.
+    const writable = await fileHandle.createWritable();
+    // Write the contents of the file to the stream.
+    await writable.write(contents);
+    // Close the file and write the contents to disk.
+    await writable.close();
   }
 }
