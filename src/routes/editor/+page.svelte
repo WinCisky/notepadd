@@ -7,7 +7,7 @@
 	import MenuFolder from '$lib/components/MenuFolder.svelte';
 	import Plus from '$lib/icons/Plus.svelte';
 	import DocumentPlus from '$lib/icons/DocumentPlus.svelte';
-	import { openFile } from '$lib/stores';
+	import { openFile, rootDirectory } from '$lib/stores';
 	import EditorJs from '$lib/icons/EditorJs.svelte';
 
 	let filemanager = new FileManager();
@@ -33,6 +33,7 @@
 			}
 			await filemanager.getFoldersAndFiles();
 			fileTree = filemanager.root;
+			rootDirectory.set(filemanager.root);
 		}
 		isLoading = false;
 	});

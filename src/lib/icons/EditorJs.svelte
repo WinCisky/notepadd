@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
     import { writable, type Writable } from 'svelte/store';
-	import { openFile } from '$lib/stores';
+	import { openFile, rootDirectory } from '$lib/stores';
+    import { get as getStore } from "svelte/store";
 
 	import EditorJS, { type ToolConstructable } from '@editorjs/editorjs';
 	import Header from '@editorjs/header';
@@ -11,6 +12,42 @@
 	import InlineCode from '@editorjs/inline-code';
     import ImageTool from '@editorjs/image';
 	import { FileManager, type TreeNode } from '$lib/filemanager';
+
+    class LocalImageTool extends ImageTool {
+        set image(file: {url: string}) {
+            this._data.file = file || {};
+
+            if (typeof file === 'undefined') {
+                return;
+            }
+
+            // try to json parse the file url
+            try {
+                const parsedFile = JSON.parse(file.url) as {name: string, path: string[]};
+                if (parsedFile.name && parsedFile.path) {
+                    // get image at path
+                    const image = FileManager.getImgeFromPathAndName(parsedFile.path, parsedFile.name);
+                    if (image && (image.handle instanceof FileSystemFileHandle)) {
+                        image.handle.getFile().then((file) => {
+                            const url = URL.createObjectURL(file);
+                            this.ui.fillImage(url);
+                        });
+                    } else{
+                        throw new Error('Image not found');
+                    }
+                } else {
+                    throw new Error('Invalid file url');
+                }
+
+            } catch (e) {
+                console.log(e);
+                // if it fails, just use the url
+                if (file && file.url) {
+                    this.ui.fillImage(file.url);
+                }
+            }
+        }
+    }
 
     type ToastType = 'info' | 'error' | 'success' | 'warning';
 
@@ -54,7 +91,8 @@
 			code: CodeTool,
 			inlineCode: InlineCode,
             image: {
-                class: ImageTool,
+                // @ts-ignore
+                class: LocalImageTool,
                 config: {
                     uploader: {
                         uploadByFile(file: File): Promise<{success: number, file: {url: string}}> {
@@ -101,23 +139,38 @@
 	}
 
     async function uploadImageByFile(file: File) {
-        await editor.isReady;
-        console.log(file);
+        if (!$openFile?.parentFolderHandle) return { success: 0, file: { url: '' } }
+        const newImage = await FileManager.createFile($openFile?.parentFolderHandle, file.name);
+        if (newImage instanceof FileSystemFileHandle) {
+            const writable = await newImage.createWritable();
+            await writable.write(file);
+            await writable.close();
+        }
+
+        const root = getStore(rootDirectory);
+        if (root?.handle instanceof FileSystemDirectoryHandle) {
+            const resolvedPath = await root.handle.resolve($openFile.handle);
+            return {
+                success: 1,
+                file: {
+                    url: JSON.stringify({ name: file.name, path: resolvedPath })
+                }
+            };
+        }
+
         return {
-            success: 1,
+            success: 0,
             file: {
-                url: 'https://placehold.co/600x400',
+                url: '',
             }
         };
     }
 
     async function uploadImageByUrl(url: string) {
-        await editor.isReady;
-        console.log(url);
         return {
             success: 1,
             file: {
-                url: 'https://placehold.co/600x400',
+                url: url,
             }
         };
     }
@@ -170,3 +223,10 @@
         </div>
     {/each}
 </div>
+
+<style>
+    /* disable image caption */
+    :global(.image-tool__caption) {
+        display: none;
+    }
+</style>

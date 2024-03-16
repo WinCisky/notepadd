@@ -1,5 +1,6 @@
 import { get, set } from "idb-keyval";
 import { nodeId } from "./stores";
+import { rootDirectory } from "./stores";
 import { get as getStore } from "svelte/store";
 
 export interface TreeNode {
@@ -8,6 +9,7 @@ export interface TreeNode {
   type: "file" | "folder";
   handle: FileSystemDirectoryHandle | FileSystemFileHandle;
   children: TreeNode[];
+  parentFolderHandle?: FileSystemDirectoryHandle;
 }
 
 export class FileManager {
@@ -103,7 +105,8 @@ export class FileManager {
             name: fileHandle.name,
             type: "file",
             handle: fileHandle,
-            children: []
+            children: [],
+            parentFolderHandle: folder.handle
           });
         } else if (entry.kind === "directory") {
           const dirHandle = entry as FileSystemDirectoryHandle;
@@ -112,7 +115,8 @@ export class FileManager {
             name: dirHandle.name,
             type: "folder",
             handle: dirHandle,
-            children: []
+            children: [],
+            parentFolderHandle: folder.handle
           };
           folder.children.push(dirNode);
           folders.push({
@@ -165,7 +169,8 @@ export class FileManager {
           name: fileHandle.name,
           type: "file",
           handle: fileHandle,
-          children: []
+          children: [],
+          parentFolderHandle: folder
         });
       } else if (entry.kind === "directory") {
         const dirHandle = entry as FileSystemDirectoryHandle;
@@ -174,7 +179,8 @@ export class FileManager {
           name: dirHandle.name,
           type: "folder",
           handle: dirHandle,
-          children: []
+          children: [],
+          parentFolderHandle: folder
         });
       }
     }
@@ -256,5 +262,41 @@ export class FileManager {
     await writable.write(contents);
     // Close the file and write the contents to disk.
     await writable.close();
+  }
+
+  public static async createFile(folder: FileSystemDirectoryHandle, fileName: string) {
+    const fileHandle = await folder.getFileHandle(fileName, { create: true });
+    return fileHandle;
+  }
+
+  public static getImgeFromPathAndName(path: string[], fileName: string) {
+    // path is like ['zets', 'kappa', 'hooh.json']
+    // where zets is a folder, kappa is a subfolder and hooh.json is a file
+    // i'm not interested in the file, just the folders
+    // skip the last element
+
+    // navigate from root matching the folder names
+    const root = getStore(rootDirectory);
+    if (root instanceof FileSystemFileHandle || !root) {
+      return;
+    }
+    let currentFolder = root;
+    let i = 0;
+    for (const folderName of path) {
+      if (i === (path.length - 1)) {
+        break;
+      }
+      const folder = currentFolder.children.find((node) => node.name === folderName);
+      if (!folder) {
+        return;
+      }
+      currentFolder = folder;
+      i++;
+    }
+    const file = currentFolder.children.find((node) => node.name === fileName);
+    if (!file) {
+      return;
+    }
+    return file;
   }
 }
