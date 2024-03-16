@@ -240,7 +240,7 @@ export class FileManager {
       options.mode = 'readwrite';
     }
     // Check if permission was already granted. If so, return true.
-    let permission = await directoryHandle.queryPermission(options);
+    const permission = await directoryHandle.queryPermission(options);
     if (permission === 'granted') {
       return true;
     }
@@ -269,7 +269,7 @@ export class FileManager {
     return fileHandle;
   }
 
-  public static getImgeFromPathAndName(path: string[], fileName: string) {
+  public static async getImgeFromPathAndName(path: string[], fileName: string) {
     // path is like ['zets', 'kappa', 'hooh.json']
     // where zets is a folder, kappa is a subfolder and hooh.json is a file
     // i'm not interested in the file, just the folders
@@ -293,10 +293,8 @@ export class FileManager {
       currentFolder = folder;
       i++;
     }
-    const file = currentFolder.children.find((node) => node.name === fileName);
-    if (!file) {
-      return;
+    if (currentFolder.handle instanceof FileSystemDirectoryHandle) {
+        return await currentFolder.handle.getFileHandle(fileName);
     }
-    return file;
   }
 }

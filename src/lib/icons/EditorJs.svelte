@@ -26,15 +26,16 @@
                 const parsedFile = JSON.parse(file.url) as {name: string, path: string[]};
                 if (parsedFile.name && parsedFile.path) {
                     // get image at path
-                    const image = FileManager.getImgeFromPathAndName(parsedFile.path, parsedFile.name);
-                    if (image && (image.handle instanceof FileSystemFileHandle)) {
-                        image.handle.getFile().then((file) => {
-                            const url = URL.createObjectURL(file);
-                            this.ui.fillImage(url);
-                        });
-                    } else{
-                        throw new Error('Image not found');
-                    }
+                    FileManager.getImgeFromPathAndName(parsedFile.path, parsedFile.name).then((image) => {
+                        if (image && (image instanceof FileSystemFileHandle)) {
+                            image.getFile().then((file) => {
+                                const url = URL.createObjectURL(file);
+                                this.ui.fillImage(url);
+                            });
+                        } else{
+                            throw new Error('Image not found');
+                        }
+                    });
                 } else {
                     throw new Error('Invalid file url');
                 }

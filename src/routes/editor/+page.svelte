@@ -132,7 +132,7 @@
 			</div>
 		{/if}
 		{#if folderSelected}
-			<button class="btn btn-circle btn-outline absolute right-8 bottom-8 z-10" on:click={createNewFile}>
+			<button class="btn btn-circle btn-outline fixed right-8 bottom-8 z-10" on:click={createNewFile}>
 				<DocumentPlus />
 			</button>
 		{/if}

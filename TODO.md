@@ -2,7 +2,6 @@
 
 - add missing elements
     - image
-    - table
 
 ## Backlog
 
@@ -10,6 +9,9 @@
     - syntax highlighting to code block
     - drag & drop to move blocks
     - add link to page
+
+- add missing elements
+    - table
 
 - implement features
     - search
