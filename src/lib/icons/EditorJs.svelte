@@ -12,6 +12,7 @@
 	import InlineCode from '@editorjs/inline-code';
     import ImageTool from '@editorjs/image';
 	import { FileManager, type TreeNode } from '$lib/filemanager';
+	import ShikiCodeTool from '$lib/shikicode';
 
     class LocalImageTool extends ImageTool {
         set image(file: {url: string}) {
@@ -90,6 +91,7 @@
 			nestedList: NestedList,
 			checklist: Checklist,
 			code: CodeTool,
+            shikiCode: ShikiCodeTool,
 			inlineCode: InlineCode,
             image: {
                 // @ts-ignore
@@ -229,5 +231,15 @@
     /* disable image caption */
     :global(.image-tool__caption) {
         display: none;
+    }
+    :global(.markdown-body .editorjs-shiki) {
+        padding: 0;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    :global(.markdown-body .editorjs-shiki pre.shiki) {
+        margin: 0;
+        min-height: 50px;
     }
 </style>
