@@ -8,11 +8,10 @@
 	import Header from '@editorjs/header';
 	import NestedList from '@editorjs/nested-list';
 	import Checklist from '@editorjs/checklist';
-	import CodeTool from '@editorjs/code';
 	import InlineCode from '@editorjs/inline-code';
     import ImageTool from '@editorjs/image';
 	import { FileManager, type TreeNode } from '$lib/filemanager';
-	import ShikiCodeTool from '$lib/shikicode';
+	import MonacoCodeTool from '$lib/monaco';
 
     class LocalImageTool extends ImageTool {
         set image(file: {url: string}) {
@@ -90,8 +89,7 @@
             },
 			nestedList: NestedList,
 			checklist: Checklist,
-			code: CodeTool,
-            shikiCode: ShikiCodeTool,
+            codeBlock: MonacoCodeTool,
 			inlineCode: InlineCode,
             image: {
                 // @ts-ignore
@@ -232,14 +230,8 @@
     :global(.image-tool__caption) {
         display: none;
     }
-    :global(.markdown-body .editorjs-shiki) {
-        padding: 0;
-        margin-top: 10px;
-        margin-bottom: 10px;
-    }
 
-    :global(.markdown-body .editorjs-shiki pre.shiki) {
-        margin: 0;
-        min-height: 50px;
+    :global(.editor-wrapper .monaco-editor, .editor-wrapper .overflow-guard){ 
+        border-radius: 10px; 
     }
 </style>
