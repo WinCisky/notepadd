@@ -1,24 +1,63 @@
 <script lang="ts">
-    import { base } from "$app/paths";
-	async function handleFiles() {
-		try {
-			// @ts-ignore
-			const directoryHandle = await window.showDirectoryPicker();
-			console.log('directoryHandle', directoryHandle);
-		} catch (error) {
-			console.error('Error opening directory', error);
-		}
-	}
+	import { base } from '$app/paths';
+	import Notepad from '$lib/icons/Notepad.svelte';
+	import Folder from '$lib/icons/Folder.svelte';
+	import CreditCard from '$lib/icons/CreditCard.svelte';
+	import Heart from '$lib/icons/Heart.svelte';
 </script>
 
 <svelte:head>
-	<title>Hello world!</title>
-	<meta name="description" content="This is where the description goes for SEO" />
+	<title>Notepadd</title>
+	<meta name="description" content="Local file editor" />
 </svelte:head>
 
-<div class="px-6 py-10 flex flex-col gap-4 justify-center items-center w-full">
-	<h1 class="text-3xl font-bold underline w-fit">Hello world!</h1>
-
-	<a href="{base}/editor" class="btn w-fit">Go to Editor</a>
-	<a href="{base}/test" class="btn w-fit">Go to Test</a>
+<div class="hero min-h-screen">
+	<div class="hero-content text-center">
+		<div class="flex flex-col gap-6 max-w-lg">
+			<div class="flex items-center justify-center gap-2">
+				<Notepad class_name="w-24 h-24" />
+				<h1 class="text-5xl font-bold">
+					Notepadd
+				</h1>
+			</div>
+			<table class="table">
+				<tbody>
+					<tr>
+						<th>
+							<Folder class_name="w-6 h-6" />
+						</th>
+						<th>
+							Local
+						</th>
+						<td>
+							your file will stay only on your pc
+						</td>
+					</tr>
+					<tr>
+						<th>
+							<CreditCard class_name="w-6 h-6" />
+						</th>
+						<th>
+							Free
+						</th>
+						<td>
+							MIT license for personal and commercial use
+						</td>
+					</tr>
+					<tr>
+						<th>
+							<Heart class_name="w-6 h-6" />
+						</th>
+						<th>
+							Open source
+						</th>
+						<td>
+							for those brave enough to contribute
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<a href="{base}/editor" class="btn btn-outline mx-auto w-fit">Go to Editor</a>
+		</div>
+	</div>
 </div>
