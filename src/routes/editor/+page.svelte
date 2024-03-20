@@ -7,8 +7,9 @@
 	import MenuFolder from '$lib/components/MenuFolder.svelte';
 	import Plus from '$lib/icons/Plus.svelte';
 	import DocumentPlus from '$lib/icons/DocumentPlus.svelte';
-	import { openFile, rootDirectory } from '$lib/stores';
+	import { openFile, rootDirectory, toDelete } from '$lib/stores';
 	import EditorJs from '$lib/icons/EditorJs.svelte';
+	import { removeFileExtension } from '$lib/helper';
 
 	let filemanager = new FileManager();
 	let renderedContent = '';
@@ -78,6 +79,15 @@
 			fileTree = filemanager.root;
 		}
 	}
+
+	function confirmFileDelete() {
+		// TODO: delete file
+		toDelete.set(null);
+	}
+
+	function cancelFileDelete() {
+		toDelete.set(null);
+	}
 </script>
 
 <svelte:head>
@@ -98,6 +108,28 @@
 	</div>
 </dialog>
 
+{#if $toDelete}
+	<div role="alert" class="alert alert-warning absolute top-2 left-0 m-auto right-0 z-20 max-w-lg">
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			class="stroke-current shrink-0 h-6 w-6"
+			fill="none"
+			viewBox="0 0 24 24"
+			><path
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				stroke-width="2"
+				d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+			/></svg
+		>
+		<span>Warning: Delete file "{removeFileExtension($toDelete.name)}"?</span>
+		<div>
+			<button class="btn btn-sm" on:click={cancelFileDelete}>No</button>
+			<button class="btn btn-sm" on:click={confirmFileDelete}>Yes</button>
+		</div>
+	</div>
+{/if}
+
 <div class="drawer min-h-screen bg-base-200 lg:drawer-open">
 	<input id="my-drawer" type="checkbox" class="drawer-toggle" />
 	<main class="drawer-content">
@@ -108,31 +140,27 @@
 				<div class="text-center">
 					<h1 class="text-4xl font-bold">
 						{#if new Date().getHours() < 12}
-							Good morning,
+							Good morning.
 						{:else if new Date().getHours() < 18}
-							Good afternoon,
+							Good afternoon.
 						{:else}
-							Good evening,
+							Good evening.
 						{/if}
 					</h1>
 					{#if !folderSelected}
-						<p class="text-lg mt-4">create or choose a folder</p>
 						<button class="btn btn-outline mt-4" on:click={openFolder}>
 							<FolderPlus />
 							Select folder
-						</button>
-					{:else}
-						<p class="text-lg mt-4">select or create a file to get started</p>
-						<button class="btn btn-outline mt-4" on:click={createNewFile}>
-							<DocumentPlus />
-							New file
 						</button>
 					{/if}
 				</div>
 			</div>
 		{/if}
 		{#if folderSelected}
-			<button class="btn btn-circle btn-outline fixed right-8 bottom-8 z-10" on:click={createNewFile}>
+			<button
+				class="btn btn-circle btn-outline fixed right-8 bottom-8 z-10"
+				on:click={createNewFile}
+			>
 				<DocumentPlus />
 			</button>
 		{/if}

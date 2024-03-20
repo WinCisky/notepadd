@@ -4,3 +4,4 @@ import type { TreeNode } from './filemanager';
 export const nodeId = writable<number>(0);
 export const openFile = writable<TreeNode | null>(null);
 export const rootDirectory = writable<TreeNode | undefined>(undefined);
+export const toDelete = writable<TreeNode | null>(null);
