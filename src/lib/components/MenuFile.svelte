@@ -3,10 +3,13 @@
 	import { openFile } from '$lib/stores';
 	import File from '$lib/icons/File.svelte';
 	import Image from '$lib/icons/Image.svelte';
+	import DocumentText from '$lib/icons/DocumentText.svelte';
+	import { isNodeImage, isNodeJson, removeFileExtension } from '$lib/helper';
 
 	export let node: TreeNode;
 
-	const isImage = node.type === 'file' && node.name.match(/\.(png|jpg|jpeg|gif|svg)$/i);
+	const isImage = isNodeImage(node);
+	const isJson = isNodeJson(node);
 
 	$: selected = $openFile?.id === node.id;
 
@@ -20,8 +23,12 @@
 		{#if isImage}
 			<Image />
 		{:else}
-			<File />
+			{#if isJson}
+				<DocumentText class_name="w-4 h-4" />
+			{:else}
+				<File />
+			{/if}
 		{/if}
-		{node.name}
+		{removeFileExtension(node.name)}
 	</button>
 </li>

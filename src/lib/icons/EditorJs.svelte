@@ -77,6 +77,7 @@
 
 	const editor = new EditorJS({
 		holder: 'editorjs',
+        minHeight: 0,
 		autofocus: true,
 		tools: {
 			header: {
@@ -233,5 +234,9 @@
 
     :global(.editor-wrapper .monaco-editor, .editor-wrapper .overflow-guard){ 
         border-radius: 10px; 
+    }
+
+    :global(.codex-editor, .codex-editor__redactor) {
+        height: 100%;
     }
 </style>

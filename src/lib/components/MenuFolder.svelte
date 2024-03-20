@@ -3,6 +3,7 @@
 	import MenuFile from './MenuFile.svelte';
     import MenuFolder from './MenuFolder.svelte';
 	import Folder from '$lib/icons/Folder.svelte';
+	import { isNodeJson } from '$lib/helper';
 
 	export let node: TreeNode;
     export let open = false;
@@ -25,12 +26,12 @@
 <li>
     <details bind:open={open}>
         <summary>
-            <Folder />
+            <Folder class_name="w-4 h-4" />
             {node.name}
         </summary>
         <ul>
             {#each node.children as child}
-                {#if child.type === 'file'}
+                {#if child.type === 'file' && (isNodeJson(child))}
                     <MenuFile node={child} />
                 {:else if child.type === 'folder'}
                     <MenuFolder node={child} filemanager={filemanager} />
