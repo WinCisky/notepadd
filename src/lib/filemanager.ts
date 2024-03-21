@@ -10,6 +10,7 @@ export interface TreeNode {
   handle: FileSystemDirectoryHandle | FileSystemFileHandle;
   children: TreeNode[];
   parentFolderHandle?: FileSystemDirectoryHandle;
+  parentFolder?: TreeNode;
 }
 
 export class FileManager {
@@ -85,9 +86,10 @@ export class FileManager {
       children: [] as TreeNode[],
     };
 
-    const folders: { handle: FileSystemDirectoryHandle, children: TreeNode[] }[] = [{
+    const folders: { handle: FileSystemDirectoryHandle, children: TreeNode[], node: TreeNode }[] = [{
       handle: this._directoryHandle,
-      children: this.root.children
+      children: this.root.children,
+      node: this.root
     }];
 
     do {
@@ -106,7 +108,8 @@ export class FileManager {
             type: "file",
             handle: fileHandle,
             children: [],
-            parentFolderHandle: folder.handle
+            parentFolderHandle: folder.handle,
+            parentFolder: folder.node
           });
         } else if (entry.kind === "directory") {
           const dirHandle = entry as FileSystemDirectoryHandle;
@@ -116,16 +119,20 @@ export class FileManager {
             type: "folder",
             handle: dirHandle,
             children: [],
-            parentFolderHandle: folder.handle
+            parentFolderHandle: folder.handle,
+            parentFolder: folder.node
           };
           folder.children.push(dirNode);
           folders.push({
             handle: dirHandle,
-            children: dirNode.children
+            children: dirNode.children,
+            node: dirNode
           });
         }
       }
     } while (folders.length > 0 && false); // only one level deep
+
+    console.log("Root", this.root);
 
     // sort alphabetically with folders first
     this.root.children.sort((a, b) => {
@@ -151,7 +158,8 @@ export class FileManager {
     return content;
   }
 
-  public async getFolderContent(folder: FileSystemDirectoryHandle): Promise<TreeNode[] | false> {
+  public async getFolderContent(node: TreeNode): Promise<TreeNode[] | false> {
+    const folder = node.handle as FileSystemDirectoryHandle;
     const hasPermission = await this.verifyFolderPermission(folder, false);
     if (!hasPermission) {
       console.log("No permission to read folder");
@@ -170,7 +178,8 @@ export class FileManager {
           type: "file",
           handle: fileHandle,
           children: [],
-          parentFolderHandle: folder
+          parentFolderHandle: folder,
+          parentFolder: node
         });
       } else if (entry.kind === "directory") {
         const dirHandle = entry as FileSystemDirectoryHandle;
@@ -180,7 +189,8 @@ export class FileManager {
           type: "folder",
           handle: dirHandle,
           children: [],
-          parentFolderHandle: folder
+          parentFolderHandle: folder,
+          parentFolder: node
         });
       }
     }
@@ -295,6 +305,16 @@ export class FileManager {
     }
     if (currentFolder.handle instanceof FileSystemDirectoryHandle) {
         return await currentFolder.handle.getFileHandle(fileName);
+    }
+  }
+
+  public static async deleteFile(file: TreeNode) {
+    if (file.parentFolderHandle) {
+      await file.parentFolderHandle.removeEntry(file.name);
+      if (file.parentFolder) {
+        console.log("Removing file from parent folder");
+        file.parentFolder.children = file.parentFolder.children.filter((node) => node.id !== file.id);
+      }
     }
   }
 }

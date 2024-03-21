@@ -81,7 +81,9 @@
 	}
 
 	function confirmFileDelete() {
-		// TODO: delete file
+		if ($toDelete) {
+			FileManager.deleteFile($toDelete);
+		}
 		toDelete.set(null);
 	}
 

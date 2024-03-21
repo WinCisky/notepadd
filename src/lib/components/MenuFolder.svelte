@@ -15,7 +15,7 @@
     $: if (open && !folderContentLoaded) {
         folderContentLoaded = true;
         if (node.type === 'folder' && node.handle instanceof FileSystemDirectoryHandle){
-            filemanager.getFolderContent(node.handle).then((content) => {
+            filemanager.getFolderContent(node).then((content) => {
                 if (!content) return;
                 node.children = content;
             });
@@ -30,7 +30,7 @@
             {node.name}
         </summary>
         <ul>
-            {#each node.children as child}
+            {#each children as child}
                 {#if child.type === 'file' && (isNodeJson(child))}
                     <MenuFile node={child} />
                 {:else if child.type === 'folder'}
