@@ -3,22 +3,23 @@
 	import MenuFile from './MenuFile.svelte';
     import MenuFolder from './MenuFolder.svelte';
 	import Folder from '$lib/icons/Folder.svelte';
-	import { isNodeJson } from '$lib/helper';
 
-	export let node: TreeNode;
+    type FileSystemHandleUnion = FileSystemDirectoryHandle | FileSystemFileHandle;
+
+    export let folderHandle: FileSystemDirectoryHandle;
     export let open = false;
-    export let folderContentLoaded = false;
-    export let filemanager: FileManager;
 
-    $: children = node.children;
+    let isFolderLoaded = false;
+    let folderContent: FileSystemHandleUnion[] = [];
 
-    $: if (open && !folderContentLoaded) {
-        folderContentLoaded = true;
-        if (node.type === 'folder' && node.handle instanceof FileSystemDirectoryHandle){
-            filemanager.getFolderContent(node).then((content) => {
-                if (!content) return;
-                node.children = content;
-            });
+    $: if (open && !isFolderLoaded) {
+        loadFolder();
+    }
+
+    async function loadFolder() {
+        isFolderLoaded = true;
+        for await (const entry of folderHandle.values()) {
+            folderContent = [...folderContent, entry];
         }
     }
 </script>
@@ -27,14 +28,12 @@
     <details bind:open={open}>
         <summary>
             <Folder class_name="w-4 h-4" />
-            {node.name}
+            {folderHandle.name}
         </summary>
         <ul>
-            {#each children as child}
-                {#if child.type === 'file' && (isNodeJson(child))}
-                    <MenuFile node={child} />
-                {:else if child.type === 'folder'}
-                    <MenuFolder node={child} filemanager={filemanager} />
+            {#each folderContent as entry}
+                {#if entry.kind === 'directory' && entry instanceof FileSystemDirectoryHandle}
+                    <MenuFolder folderHandle={entry} />
                 {/if}
             {/each}
         </ul>

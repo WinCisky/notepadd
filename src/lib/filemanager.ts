@@ -132,8 +132,6 @@ export class FileManager {
       }
     } while (folders.length > 0 && false); // only one level deep
 
-    console.log("Root", this.root);
-
     // sort alphabetically with folders first
     this.root.children.sort((a, b) => {
       if (a.type === "folder" && b.type === "file") {
@@ -312,7 +310,6 @@ export class FileManager {
     if (file.parentFolderHandle) {
       await file.parentFolderHandle.removeEntry(file.name);
       if (file.parentFolder) {
-        console.log("Removing file from parent folder");
         file.parentFolder.children = file.parentFolder.children.filter((node) => node.id !== file.id);
       }
     }

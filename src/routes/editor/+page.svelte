@@ -1,5 +1,6 @@
 <script lang="ts">
 	import md from 'markdown-it';
+	import { base } from '$app/paths';
 	import { onMount } from 'svelte';
 	import { FileManager, type TreeNode } from '$lib/filemanager';
 	import Notepad from '$lib/icons/Notepad.svelte';
@@ -173,16 +174,18 @@
 		<nav
 			class="flex min-h-screen min-w-72 w-fit flex-col gap-2 overflow-y-auto bg-base-100 px-6 py-10"
 		>
-			<div class="mx-4 flex items-center gap-2 font-black">
-				<Notepad />
-				Notepadd
+			<div class="mx-4">
+				<a href="/{base}" class="flex items-center gap-2 font-black">
+					<Notepad />
+					Notepadd
+				</a>
 			</div>
 			{#if isLoading}
 				<button class="btn skeleton mt-4"> Loading... </button>
 			{:else if folderSelected}
 				<ul class="menu">
-					{#if fileTree}
-						<MenuFolder node={fileTree} open={true} folderContentLoaded={true} {filemanager} />
+					{#if fileTree && fileTree.handle instanceof FileSystemDirectoryHandle}
+						<MenuFolder open={true} folderHandle={fileTree.handle} />
 					{:else}
 						<li class="mt-4">No files found</li>
 						<li class="mt-4">
