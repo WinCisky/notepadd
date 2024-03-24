@@ -13,16 +13,9 @@
 	import { removeFileExtension } from '$lib/helper';
 
 	let filemanager = new FileManager();
-	let renderedContent = '';
 	let folderSelected = false;
 	let isLoading = true;
-	let fileTree: TreeNode | undefined;
-
-	$: {
-		if ($openFile) {
-			openFileChange($openFile!);
-		}
-	}
+	let reloadFolder = false;
 
 	onMount(async () => {
 		folderSelected = await filemanager.isFolderLoaded();
@@ -33,9 +26,7 @@
 				const permission_modal = document.getElementById('permission_modal') as HTMLDialogElement;
 				permission_modal.showModal();
 			}
-			await filemanager.getFoldersAndFiles();
-			fileTree = filemanager.root;
-			rootDirectory.set(filemanager.root);
+			rootDirectory.set(filemanager.getRootDirectory());
 		}
 		isLoading = false;
 	});
@@ -46,44 +37,27 @@
 		const permission_modal = document.getElementById('permission_modal') as HTMLDialogElement;
 		permission_modal.close();
 		await filemanager.getFoldersAndFiles();
-		fileTree = filemanager.root;
+		rootDirectory.set(filemanager.getRootDirectory());
 		isLoading = false;
 	}
 
 	async function openFolder() {
 		folderSelected = await filemanager.openFolder();
 		if (folderSelected) {
-			await filemanager.getFoldersAndFiles();
-			fileTree = filemanager.root;
-		}
-	}
-
-	async function openFileChange(node: TreeNode) {
-		if (node.type === 'file') {
-			if (node.handle instanceof FileSystemFileHandle) {
-				const file = await node.handle.getFile();
-				const content = await file.text();
-				if (file.name.endsWith('.md')) {
-					renderedContent = md().render(content);
-				} else {
-					// TODO: handle other file types
-					renderedContent = content;
-				}
-			}
+			rootDirectory.set(filemanager.getRootDirectory());
 		}
 	}
 
 	async function createNewFile() {
 		const file = await filemanager.getNewFileHandle();
-		if (file) {
-			await filemanager.getFoldersAndFiles();
-			fileTree = filemanager.root;
-		}
+		reloadFolder = true;
+		openFile.set(file);
 	}
 
 	function confirmFileDelete() {
 		if ($toDelete) {
-			FileManager.deleteFile($toDelete);
+			// TODO: implement delete file
+			// FileManager.deleteFile($toDelete);
 		}
 		toDelete.set(null);
 	}
@@ -184,8 +158,8 @@
 				<button class="btn skeleton mt-4"> Loading... </button>
 			{:else if folderSelected}
 				<ul class="menu">
-					{#if fileTree && fileTree.handle instanceof FileSystemDirectoryHandle}
-						<MenuFolder open={true} folderHandle={fileTree.handle} />
+					{#if $rootDirectory}
+						<MenuFolder open={true} folderHandle={$rootDirectory} reloadFolder={reloadFolder} />
 					{:else}
 						<li class="mt-4">No files found</li>
 						<li class="mt-4">

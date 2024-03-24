@@ -5,23 +5,23 @@
 	import Image from '$lib/icons/Image.svelte';
 	import Trash from '$lib/icons/Trash.svelte';
 	import DocumentText from '$lib/icons/DocumentText.svelte';
-	import { isNodeImage, isNodeJson, removeFileExtension } from '$lib/helper';
+	import { isFileImage, isFileJson, removeFileExtension } from '$lib/helper';
 
-	export let node: TreeNode;
+	export let fileHandle: FileSystemFileHandle;
 
 	let isHovered = false;
 
-	const isImage = isNodeImage(node);
-	const isJson = isNodeJson(node);
+	const isImage = isFileImage(fileHandle);
+	const isJson = isFileJson(fileHandle);
 
-	$: selected = $openFile?.id === node.id;
+	$: selected = $openFile === fileHandle;
 
 	function selectFile() {
-		openFile.set(node);
+		openFile.set(fileHandle);
 	}
 
 	function deleteFile() {
-		toDelete.set(node);
+		toDelete.set(fileHandle);
 	}
 </script>
 
@@ -34,7 +34,7 @@
 		{:else}
 			<File />
 		{/if}
-		{removeFileExtension(node.name)}
+		{removeFileExtension(fileHandle.name)}
 	</button>
 	{#if isHovered}
 		<button class="btn btn-square btn-sm absolute right-[2px] top-[2px]" on:click={deleteFile}>

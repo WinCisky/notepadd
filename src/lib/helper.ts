@@ -11,3 +11,11 @@ export function isNodeImage(node: TreeNode): boolean {
 export function removeFileExtension(filename: string): string {
     return filename.replace(/\.[^/.]+$/, '');
 }
+
+export function isFileImage(handle: FileSystemFileHandle): boolean {
+    return handle.name.match(/\.(png|jpg|jpeg|gif|svg)$/i) !== null;
+}
+
+export function isFileJson(handle: FileSystemFileHandle): boolean {
+    return handle.name.match(/\.(json)$/i) !== null;
+}

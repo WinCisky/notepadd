@@ -67,83 +67,6 @@ export class FileManager {
     return handle;
   }
 
-  // iteratively list all files inside of folder with subfolder and subfiles
-  public async getFiles(): Promise<void> {
-    if (!this._directoryHandle) {
-      return;
-    }
-    const hasPermission = await this.verifyFolderPermission(this._directoryHandle, false);
-    if (!hasPermission) {
-      console.log("No permission to read folder");
-      return;
-    }
-
-    this.root = {
-      id: getStore(nodeId),
-      name: this._directoryHandle.name,
-      type: "folder",
-      handle: this._directoryHandle,
-      children: [] as TreeNode[],
-    };
-
-    const folders: { handle: FileSystemDirectoryHandle, children: TreeNode[], node: TreeNode }[] = [{
-      handle: this._directoryHandle,
-      children: this.root.children,
-      node: this.root
-    }];
-
-    do {
-      const folder = folders.pop();
-      if (!folder) {
-        break;
-      }
-
-      for await (const entry of folder.handle.values()) {
-        nodeId.update((n) => n + 1);
-        if (entry.kind === "file") {
-          const fileHandle = entry as FileSystemFileHandle;
-          folder.children.push({
-            id: getStore(nodeId),
-            name: fileHandle.name,
-            type: "file",
-            handle: fileHandle,
-            children: [],
-            parentFolderHandle: folder.handle,
-            parentFolder: folder.node
-          });
-        } else if (entry.kind === "directory") {
-          const dirHandle = entry as FileSystemDirectoryHandle;
-          const dirNode: TreeNode = {
-            id: getStore(nodeId),
-            name: dirHandle.name,
-            type: "folder",
-            handle: dirHandle,
-            children: [],
-            parentFolderHandle: folder.handle,
-            parentFolder: folder.node
-          };
-          folder.children.push(dirNode);
-          folders.push({
-            handle: dirHandle,
-            children: dirNode.children,
-            node: dirNode
-          });
-        }
-      }
-    } while (folders.length > 0 && false); // only one level deep
-
-    // sort alphabetically with folders first
-    this.root.children.sort((a, b) => {
-      if (a.type === "folder" && b.type === "file") {
-        return -1;
-      }
-      if (a.type === "file" && b.type === "folder") {
-        return 1;
-      }
-      return a.name.localeCompare(b.name);
-    });
-  }
-
   public async getFileContent(file: FileSystemFileHandle): Promise<string | false> {
     const hasPermission = await this.verifyFilePermission(file, false);
     if (!hasPermission) {
@@ -195,6 +118,10 @@ export class FileManager {
     return children;
   }
 
+  public getRootDirectory() {
+    return this._directoryHandle ?? null;
+  }
+
   public async getFoldersAndFiles() {
     if (!this._directoryHandle) {
       return;
@@ -204,7 +131,6 @@ export class FileManager {
       console.log("No permission to read folder");
       return;
     }
-    await this.getFiles();
   }
 
   public async hasPermission(): Promise<boolean> {
@@ -314,4 +240,5 @@ export class FileManager {
       }
     }
   }
+  
 }

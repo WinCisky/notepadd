@@ -68,7 +68,7 @@
     const toasts: Writable<ToastMessage[]> = writable([]);
 
 	let fileWithError = false;
-	let previousOpenFile: TreeNode | null;
+	let previousOpenFile: FileSystemFileHandle | null = null;
 
 	// on open file changes save the previous file and load the new file
 	$: if ($openFile && $openFile !== previousOpenFile) {
@@ -141,29 +141,29 @@
 	}
 
     async function uploadImageByFile(file: File) {
-        if (!$openFile?.parentFolderHandle) return { success: 0, file: { url: '' } }
-        const newImage = await FileManager.createFile($openFile?.parentFolderHandle, file.name);
+
+        const root = getStore(rootDirectory);
+        if (!root || !$openFile) return { success: 0, file: { url: '' } }
+        const resolvedPath = await root.resolve($openFile)
+        if (!resolvedPath) return { success: 0, file: { url: '' } }
+
+        // get filde handle of parent folder
+        let parentDirHandle = root;
+        for (let i = 0; i < resolvedPath.length - 1; i++) {
+            parentDirHandle = await parentDirHandle.getDirectoryHandle(resolvedPath[i]);
+        }
+
+        const newImage = await FileManager.createFile(parentDirHandle, file.name);
         if (newImage instanceof FileSystemFileHandle) {
             const writable = await newImage.createWritable();
             await writable.write(file);
             await writable.close();
         }
 
-        const root = getStore(rootDirectory);
-        if (root?.handle instanceof FileSystemDirectoryHandle) {
-            const resolvedPath = await root.handle.resolve($openFile.handle);
-            return {
-                success: 1,
-                file: {
-                    url: JSON.stringify({ name: file.name, path: resolvedPath })
-                }
-            };
-        }
-
         return {
-            success: 0,
+            success: 1,
             file: {
-                url: '',
+                url: JSON.stringify({ name: file.name, path: resolvedPath })
             }
         };
     }
@@ -187,19 +187,15 @@
 		if (fileWithError) return;
 		await editor.isReady;
 		const outputData = await editor.save();
-		if (
-			previousOpenFile &&
-			previousOpenFile.handle &&
-			previousOpenFile.handle instanceof FileSystemFileHandle
-		) {
-			FileManager.writeFile(previousOpenFile.handle, JSON.stringify(outputData));
+		if (previousOpenFile && previousOpenFile) {
+			FileManager.writeFile(previousOpenFile, JSON.stringify(outputData));
 		}
 	}
 
 	async function load() {
 		fileWithError = true;
-		if ($openFile && $openFile.handle && $openFile.handle instanceof FileSystemFileHandle) {
-			const file = await $openFile.handle.getFile();
+		if ($openFile && $openFile) {
+			const file = await $openFile.getFile();
 			const contents = await file.text();
             if (contents.length > 0) {
                 try {
