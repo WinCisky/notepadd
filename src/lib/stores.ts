@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 
-// TODO: remove this store
-export const nodeId = writable<number>(0);
+// currently open file path
+export const openFilePath = writable<string[] | null>(null);
 // currently open file
 export const openFile = writable<FileSystemFileHandle | null>(null);
 // selected root directory

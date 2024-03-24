@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { type TreeNode } from '$lib/filemanager';
-	import { openFile, toDelete } from '$lib/stores';
+	import { openFile, openFilePath, rootDirectory, toDelete } from '$lib/stores';
 	import File from '$lib/icons/File.svelte';
 	import Image from '$lib/icons/Image.svelte';
 	import Trash from '$lib/icons/Trash.svelte';
@@ -16,8 +16,12 @@
 
 	$: selected = $openFile === fileHandle;
 
-	function selectFile() {
+	async function selectFile() {
 		openFile.set(fileHandle);
+		const path = await $rootDirectory?.resolve(fileHandle);
+		if (path) {
+			openFilePath.set(path);
+		}
 	}
 
 	function deleteFile() {

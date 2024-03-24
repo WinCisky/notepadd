@@ -8,7 +8,7 @@
 	import MenuFolder from '$lib/components/MenuFolder.svelte';
 	import Plus from '$lib/icons/Plus.svelte';
 	import DocumentPlus from '$lib/icons/DocumentPlus.svelte';
-	import { openFile, rootDirectory, toDelete } from '$lib/stores';
+	import { createdFilePath, openFile, openFilePath, rootDirectory, toDelete } from '$lib/stores';
 	import EditorJs from '$lib/icons/EditorJs.svelte';
 	import { removeFileExtension } from '$lib/helper';
 
@@ -50,14 +50,19 @@
 
 	async function createNewFile() {
 		const file = await filemanager.getNewFileHandle();
-		reloadFolder = true;
 		openFile.set(file);
+		const path = await $rootDirectory?.resolve(file);
+		if (path) {
+			openFilePath.set(path);
+			createdFilePath.set(path);
+		}
+		reloadFolder = true;
 	}
 
-	function confirmFileDelete() {
+	async function confirmFileDelete() {
 		if ($toDelete) {
-			// TODO: implement delete file
-			// FileManager.deleteFile($toDelete);
+			await FileManager.deleteFile($toDelete);
+			reloadFolder = true;
 		}
 		toDelete.set(null);
 	}
@@ -159,7 +164,7 @@
 			{:else if folderSelected}
 				<ul class="menu">
 					{#if $rootDirectory}
-						<MenuFolder open={true} folderHandle={$rootDirectory} reloadFolder={reloadFolder} />
+						<MenuFolder open={true} folderHandle={$rootDirectory} bind:reloadFolder={reloadFolder} />
 					{:else}
 						<li class="mt-4">No files found</li>
 						<li class="mt-4">

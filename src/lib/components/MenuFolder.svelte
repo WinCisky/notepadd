@@ -4,7 +4,7 @@
     import MenuFolder from './MenuFolder.svelte';
 	import Folder from '$lib/icons/Folder.svelte';
 	import { isFileJson } from '$lib/helper';
-    import { deletedFilePath, createdFilePath } from '$lib/stores';
+    import { deletedFilePath, createdFilePath, openFilePath, rootDirectory } from '$lib/stores';
 
     type FileSystemHandleUnion = FileSystemDirectoryHandle | FileSystemFileHandle;
 
@@ -16,39 +16,19 @@
     let reloadSubFolders = false;
     let folderContent: FileSystemHandleUnion[] = [];
 
-    $: if (open && !isFolderLoaded) {
+    $: if ((open && !isFolderLoaded) || reloadFolder) {
         isFolderLoaded = true;
-        loadFolder();
-    }
-
-    $: if (open && reloadFolder) {
         reloadFolder = false;
-        if ($deletedFilePath) {
-            if ($deletedFilePath.includes(folderHandle.name)) {
-                // if tehre's the deleted file, set the deleted file path to null
-                const deletedFile = $deletedFilePath[$deletedFilePath.length - 1];
-                for (const entry of folderContent) {
-                    if (entry.name === deletedFile) {
-                        deletedFilePath.set(null);
-                        break;
-                    }
-                }
-                loadFolder();
-            }
+
+        // set folder open if it's in the open file path
+        if ($deletedFilePath && $deletedFilePath.includes(folderHandle.name)) {
+            open = true;
         }
-        if ($createdFilePath) {
-            if ($createdFilePath.includes(folderHandle.name)) {
-                // if tehre's the created file, set the created file path to null
-                const createdFile = $createdFilePath[$createdFilePath.length - 1];
-                for (const entry of folderContent) {
-                    if (entry.name === createdFile) {
-                        createdFilePath.set(null);
-                        break;
-                    }
-                }
-                loadFolder();
-            }
+        // set folder open if it's in the created file path
+        if ($createdFilePath && $createdFilePath.includes(folderHandle.name)) {
+            open = true;
         }
+
         loadFolder();
     }
 
@@ -67,6 +47,18 @@
             folderContent = [...folderContent, entry];
         }
     }
+
+    function isSubFolderOpen(entry : FileSystemDirectoryHandle) {
+        if (!$openFilePath) return false;
+        if (folderHandle === $rootDirectory) return true;
+        // get current folder index from open file path
+        const folderIndex = $openFilePath.indexOf(folderHandle.name);
+        if (folderIndex === -1) return false;
+        if ($openFilePath.length < 2 || folderIndex === $openFilePath.length - 2) return true;
+        // get name of the next index
+        const nextFolder = $openFilePath[folderIndex + 1];
+        return nextFolder === entry.name;
+    }
 </script>
 
 <li>
@@ -78,7 +70,7 @@
         <ul>
             {#each sortedFolderContent as entry}
                 {#if entry.kind === 'directory' && entry instanceof FileSystemDirectoryHandle}
-                    <MenuFolder folderHandle={entry} reloadFolder={reloadSubFolders} />
+                    <MenuFolder folderHandle={entry} bind:reloadFolder={reloadSubFolders} open={isSubFolderOpen(entry)} />
                 {:else if entry.kind === 'file' && isFileJson(entry)}
                     <MenuFile fileHandle={entry} />
                 {/if}

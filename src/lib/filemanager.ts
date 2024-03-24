@@ -1,5 +1,5 @@
 import { get, set } from "idb-keyval";
-import { nodeId } from "./stores";
+import { deletedFilePath } from "./stores";
 import { rootDirectory } from "./stores";
 import { get as getStore } from "svelte/store";
 
@@ -77,45 +77,6 @@ export class FileManager {
     const fileContent = await file.getFile();
     const content = await fileContent.text();
     return content;
-  }
-
-  public async getFolderContent(node: TreeNode): Promise<TreeNode[] | false> {
-    const folder = node.handle as FileSystemDirectoryHandle;
-    const hasPermission = await this.verifyFolderPermission(folder, false);
-    if (!hasPermission) {
-      console.log("No permission to read folder");
-      return false;
-    }
-
-    const children: TreeNode[] = [];
-    // get children of folder
-    for await (const entry of folder.values()) {
-      nodeId.update((n) => n + 1);
-      if (entry.kind === "file") {
-        const fileHandle = entry as FileSystemFileHandle;
-        children.push({
-          id: getStore(nodeId),
-          name: fileHandle.name,
-          type: "file",
-          handle: fileHandle,
-          children: [],
-          parentFolderHandle: folder,
-          parentFolder: node
-        });
-      } else if (entry.kind === "directory") {
-        const dirHandle = entry as FileSystemDirectoryHandle;
-        children.push({
-          id: getStore(nodeId),
-          name: dirHandle.name,
-          type: "folder",
-          handle: dirHandle,
-          children: [],
-          parentFolderHandle: folder,
-          parentFolder: node
-        });
-      }
-    }
-    return children;
   }
 
   public getRootDirectory() {
@@ -220,24 +181,45 @@ export class FileManager {
       if (i === (path.length - 1)) {
         break;
       }
-      const folder = currentFolder.children.find((node) => node.name === folderName);
+      // const folder = currentFolder.children.find((node) => node.name === folderName);
+      const folder = await currentFolder.getDirectoryHandle(folderName);
       if (!folder) {
         return;
       }
       currentFolder = folder;
       i++;
     }
-    if (currentFolder.handle instanceof FileSystemDirectoryHandle) {
-        return await currentFolder.handle.getFileHandle(fileName);
+    if (currentFolder) {
+        return await currentFolder.getFileHandle(fileName);
     }
   }
 
-  public static async deleteFile(file: TreeNode) {
-    if (file.parentFolderHandle) {
-      await file.parentFolderHandle.removeEntry(file.name);
-      if (file.parentFolder) {
-        file.parentFolder.children = file.parentFolder.children.filter((node) => node.id !== file.id);
+  public static async deleteFile(fileHandle: FileSystemFileHandle) {
+    const root = getStore(rootDirectory);
+    if (root instanceof FileSystemFileHandle || !root) {
+      return;
+    }
+    const path = await root.resolve(fileHandle);
+    if (!path) {
+      return;
+    }
+    let currentFolder = root;
+    let i = 0;
+    for (const folderName of path) {
+      if (i === (path.length - 1)) {
+        break;
       }
+      // const folder = currentFolder.children.find((node) => node.name === folderName);
+      const folder = await currentFolder.getDirectoryHandle(folderName);
+      if (!folder) {
+        return;
+      }
+      currentFolder = folder;
+      i++;
+    }
+    if (currentFolder) {
+      await currentFolder.removeEntry(fileHandle.name);
+      deletedFilePath.set(path);
     }
   }
   
