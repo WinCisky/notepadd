@@ -4,6 +4,7 @@
     import MenuFolder from './MenuFolder.svelte';
 	import Folder from '$lib/icons/Folder.svelte';
 	import { isFileJson } from '$lib/helper';
+    import { deletedFilePath, createdFilePath } from '$lib/stores';
 
     type FileSystemHandleUnion = FileSystemDirectoryHandle | FileSystemFileHandle;
 
@@ -12,11 +13,42 @@
     export let reloadFolder = false;
 
     let isFolderLoaded = false;
+    let reloadSubFolders = false;
     let folderContent: FileSystemHandleUnion[] = [];
 
-    $: if (open && (!isFolderLoaded || reloadFolder)) {
+    $: if (open && !isFolderLoaded) {
         isFolderLoaded = true;
+        loadFolder();
+    }
+
+    $: if (open && reloadFolder) {
         reloadFolder = false;
+        if ($deletedFilePath) {
+            if ($deletedFilePath.includes(folderHandle.name)) {
+                // if tehre's the deleted file, set the deleted file path to null
+                const deletedFile = $deletedFilePath[$deletedFilePath.length - 1];
+                for (const entry of folderContent) {
+                    if (entry.name === deletedFile) {
+                        deletedFilePath.set(null);
+                        break;
+                    }
+                }
+                loadFolder();
+            }
+        }
+        if ($createdFilePath) {
+            if ($createdFilePath.includes(folderHandle.name)) {
+                // if tehre's the created file, set the created file path to null
+                const createdFile = $createdFilePath[$createdFilePath.length - 1];
+                for (const entry of folderContent) {
+                    if (entry.name === createdFile) {
+                        createdFilePath.set(null);
+                        break;
+                    }
+                }
+                loadFolder();
+            }
+        }
         loadFolder();
     }
 
@@ -46,7 +78,7 @@
         <ul>
             {#each sortedFolderContent as entry}
                 {#if entry.kind === 'directory' && entry instanceof FileSystemDirectoryHandle}
-                    <MenuFolder folderHandle={entry} />
+                    <MenuFolder folderHandle={entry} reloadFolder={reloadSubFolders} />
                 {:else if entry.kind === 'file' && isFileJson(entry)}
                     <MenuFile fileHandle={entry} />
                 {/if}
