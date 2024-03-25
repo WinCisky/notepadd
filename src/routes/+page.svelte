@@ -16,9 +16,7 @@
 		<div class="flex flex-col gap-6 max-w-lg">
 			<div class="flex items-center justify-center gap-2">
 				<h1 class="text-5xl font-bold">
-					<a href="{base}/editor">
-						Notepadd
-					</a>
+					<a href="{base}/editor"> Notepadd </a>
 				</h1>
 			</div>
 		</div>

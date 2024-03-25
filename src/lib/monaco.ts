@@ -16,7 +16,7 @@ class MonacoCodeTool {
     private languages: string[] = [];
 
     constructor({ data }: { data: MonacoEditorData }) {
-        this.data = data || { code: '', language: '', height: 1, wordwrap: false, minimap: true};
+        this.data = data || { code: '', language: '', height: 1, wordwrap: false, minimap: true };
         this.codeElement = document.createElement('code');
     }
 
@@ -43,7 +43,7 @@ class MonacoCodeTool {
             const model = this.monacoEditor.getModel();
             const lines = model?.getLineCount() || 1;
             this.data.height = lines;
-            const lineHeight = 19;
+            const lineHeight = 18;
             const height = lines * lineHeight;
             container.style.height = `${height}px`;
             this.monacoEditor.layout();
@@ -97,7 +97,7 @@ class MonacoCodeTool {
             onActivate: () => {
                 if (this.monacoEditor) {
                     this.data.wordwrap = !this.data.wordwrap;
-                    this.monacoEditor.updateOptions({ wordWrap: this.data.wordwrap ? 'on' : 'off'});
+                    this.monacoEditor.updateOptions({ wordWrap: this.data.wordwrap ? 'on' : 'off' });
                 }
             }
         });
@@ -131,7 +131,7 @@ class MonacoCodeTool {
 
         settings.push(...langs);
         return settings;
-      }
+    }
 
     save() {
         if (!this.monacoEditor) {

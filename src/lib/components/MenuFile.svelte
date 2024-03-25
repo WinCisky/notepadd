@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { type TreeNode } from '$lib/filemanager';
+	import { set } from 'idb-keyval';
 	import { openFile, openFilePath, rootDirectory, toDelete } from '$lib/stores';
 	import File from '$lib/icons/File.svelte';
 	import Image from '$lib/icons/Image.svelte';
@@ -10,17 +10,21 @@
 	export let fileHandle: FileSystemFileHandle;
 
 	let isHovered = false;
+	let selected = false;
 
 	const isImage = isFileImage(fileHandle);
 	const isJson = isFileJson(fileHandle);
 
-	$: selected = $openFile === fileHandle;
+	$: $openFile?.isSameEntry(fileHandle).then((same) => {
+		selected = same;
+	});
 
 	async function selectFile() {
 		openFile.set(fileHandle);
 		const path = await $rootDirectory?.resolve(fileHandle);
 		if (path) {
 			openFilePath.set(path);
+			await set('openFilePath', path);
 		}
 	}
 

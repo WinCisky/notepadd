@@ -1,12 +1,13 @@
 ## TODO
 
-- add missing elements
-    - image
+- bugfix
+    - image element
+        - verify the functionality after refactor in menu structure
+        - implement drag & drop for json images
 
 ## Backlog
 
 - extend elements
-    - syntax highlighting to code block
     - drag & drop to move blocks
     - add link to page
 
@@ -17,10 +18,6 @@
     - search
     - import from markdown
     - export to markdown
-
-- open folders
-    - save what folders are open
-    - open folders on load
 
 - emoji
     - add emoji to page

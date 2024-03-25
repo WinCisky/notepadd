@@ -1,5 +1,5 @@
 <script lang="ts">
-	import md from 'markdown-it';
+	import { get, set } from 'idb-keyval';
 	import { base } from '$app/paths';
 	import { onMount } from 'svelte';
 	import { FileManager, type TreeNode } from '$lib/filemanager';
@@ -9,7 +9,7 @@
 	import Plus from '$lib/icons/Plus.svelte';
 	import DocumentPlus from '$lib/icons/DocumentPlus.svelte';
 	import { createdFilePath, openFile, openFilePath, rootDirectory, toDelete } from '$lib/stores';
-	import EditorJs from '$lib/icons/EditorJs.svelte';
+	import EditorJs from '$lib/components/EditorJs.svelte';
 	import { removeFileExtension } from '$lib/helper';
 
 	let filemanager = new FileManager();
@@ -27,6 +27,38 @@
 				permission_modal.showModal();
 			}
 			rootDirectory.set(filemanager.getRootDirectory());
+			// open file path
+			const openFilePathValue = await get('openFilePath');
+			if (openFilePathValue) {
+				openFilePath.set(openFilePathValue);
+				let i = 0;
+				let currentFolder = filemanager.getRootDirectory();
+				if (currentFolder != null) {
+					for (const folderName of openFilePathValue) {
+						if (i === openFilePathValue.length - 1) {
+							break;
+						}
+						const folder: FileSystemDirectoryHandle =
+							await currentFolder.getDirectoryHandle(folderName);
+						if (!folder) {
+							currentFolder = null;
+							break;
+						}
+						currentFolder = folder;
+						i++;
+					}
+					if (currentFolder) {
+						try {
+							const file = await currentFolder.getFileHandle(
+								openFilePathValue[openFilePathValue.length - 1]
+							);
+							openFile.set(file);
+						} catch (e) {
+							console.log('File not found :(');
+						}
+					}
+				}
+			}
 		}
 		isLoading = false;
 	});
@@ -55,6 +87,7 @@
 		if (path) {
 			openFilePath.set(path);
 			createdFilePath.set(path);
+			await set('openFilePath', path);
 		}
 		reloadFolder = true;
 	}
@@ -62,6 +95,12 @@
 	async function confirmFileDelete() {
 		if ($toDelete) {
 			await FileManager.deleteFile($toDelete);
+			openFile.set(null);
+			const oldPath = $openFilePath;
+			if (oldPath) {
+				oldPath[oldPath.length - 1] = '';
+				openFilePath.set(oldPath);
+			}
 			reloadFolder = true;
 		}
 		toDelete.set(null);
@@ -164,7 +203,7 @@
 			{:else if folderSelected}
 				<ul class="menu">
 					{#if $rootDirectory}
-						<MenuFolder open={true} folderHandle={$rootDirectory} bind:reloadFolder={reloadFolder} />
+						<MenuFolder open={true} folderHandle={$rootDirectory} bind:reloadFolder />
 					{:else}
 						<li class="mt-4">No files found</li>
 						<li class="mt-4">

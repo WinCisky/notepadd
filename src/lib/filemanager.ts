@@ -56,12 +56,12 @@ export class FileManager {
 
   public async getNewFileHandle() {
     const options: SaveFilePickerOptions = {
-    types: [
-      {
-      description: 'Text Files',
-      accept: { 'text/plain': ['.json'] as `.${string}`[] },
-      },
-    ],
+      types: [
+        {
+          description: 'Text Files',
+          accept: { 'text/plain': ['.json'] as `.${string}`[] },
+        },
+      ],
     };
     const handle = await window.showSaveFilePicker(options);
     return handle;
@@ -190,7 +190,7 @@ export class FileManager {
       i++;
     }
     if (currentFolder) {
-        return await currentFolder.getFileHandle(fileName);
+      return await currentFolder.getFileHandle(fileName);
     }
   }
 
@@ -222,5 +222,5 @@ export class FileManager {
       deletedFilePath.set(path);
     }
   }
-  
+
 }
