@@ -1,9 +1,8 @@
 ## TODO
 
 - bugfix
-    - image element
-        - verify the functionality after refactor in menu structure
-        - implement drag & drop for json images
+    - after setting the heading size, it's not focused the row to type
+    - scroll over the code block is not working
 
 ## Backlog
 

@@ -14,10 +14,29 @@ class MonacoCodeTool {
     private readonly data: MonacoEditorData;
     private monacoEditor: editor.IStandaloneCodeEditor | null = null;
     private languages: string[] = [];
+    private container: HTMLElement | null = null;
 
     constructor({ data }: { data: MonacoEditorData }) {
-        this.data = data || { code: '', language: '', height: 1, wordwrap: false, minimap: true };
+        this.data = data || { code: '', language: '', height: 1, wordwrap: false, minimap: true};
         this.codeElement = document.createElement('code');
+    }
+
+
+    _updateHeight(editor: editor.IStandaloneCodeEditor) {
+        const contentHeight = editor.getContentHeight();
+        const layoutInfo = editor.getLayoutInfo();
+        const isWrapping = layoutInfo.isViewportWrapping;
+        const horizontalScrollbarHeight = layoutInfo.horizontalScrollbarHeight;
+
+        let totalHeight = contentHeight;
+
+        if (!isWrapping) {
+            totalHeight += horizontalScrollbarHeight;
+        }
+        if (this.container) {
+            this.container.style.height = `${totalHeight}px`;
+            editor.layout();
+        }
     }
 
     render() {
@@ -40,28 +59,18 @@ class MonacoCodeTool {
                 this.monacoEditor.updateOptions({ minimap: { enabled: false } });
             }
             this.monacoEditor.updateOptions({ scrollBeyondLastLine: false });
-            const model = this.monacoEditor.getModel();
-            const lines = model?.getLineCount() || 1;
-            this.data.height = lines;
-            const lineHeight = 18;
-            const height = lines * lineHeight;
-            container.style.height = `${height}px`;
-            this.monacoEditor.layout();
 
-            // listen for changes with debounce
+
+            this._updateHeight(this.monacoEditor);
             this.monacoEditor.onDidChangeModelContent(() => {
-                // get line count
-                const lines = this.monacoEditor?.getModel()?.getLineCount() || 1;
-                if (lines !== this.data.height) {
-                    this.data.height = lines;
-                    const height = lines * lineHeight;
-                    container.style.height = `${height}px`;
-                    this.monacoEditor?.layout();
+                if (this.monacoEditor) {
+                    this._updateHeight(this.monacoEditor);
                 }
             });
 
         });
 
+        this.container = container;
         return container;
     }
 
@@ -97,7 +106,8 @@ class MonacoCodeTool {
             onActivate: () => {
                 if (this.monacoEditor) {
                     this.data.wordwrap = !this.data.wordwrap;
-                    this.monacoEditor.updateOptions({ wordWrap: this.data.wordwrap ? 'on' : 'off' });
+                    this.monacoEditor.updateOptions({ wordWrap: this.data.wordwrap ? 'on' : 'off'});
+                    this._updateHeight(this.monacoEditor);
                 }
             }
         });
@@ -131,7 +141,7 @@ class MonacoCodeTool {
 
         settings.push(...langs);
         return settings;
-    }
+      }
 
     save() {
         if (!this.monacoEditor) {

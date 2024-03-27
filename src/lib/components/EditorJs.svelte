@@ -21,9 +21,15 @@
 				return;
 			}
 
+			// check if url is a link
+			if (file.url.startsWith('http')) {
+				this.ui.fillImage(file.url);
+				return;
+			}
+
 			// try to json parse the file url
 			try {
-				const parsedFile = JSON.parse(file.url) as { name: string; path: string[] };
+				const parsedFile = JSON.parse(decodeURIComponent(file.url)) as { name: string; path: string[] };
 				if (parsedFile.name && parsedFile.path) {
 					// get image at path
 					FileManager.getImgeFromPathAndName(parsedFile.path, parsedFile.name).then((image) => {
@@ -150,6 +156,28 @@
 		save();
 	}
 
+	function getRandomImageFileName(file: File) {
+		let extension = '';
+		switch (file.type) {
+			case 'image/jpeg':
+				extension = '.jpg';
+				break;
+			case 'image/png':
+				extension = '.png';
+				break;
+			case 'image/gif':
+				extension = '.gif';
+				break;
+			case 'image/webp':
+				extension = '.webp';
+				break;
+			default:
+				extension = '.jpg';
+				break;
+		}
+		return `image-${Date.now()}${extension}`;
+	}
+
 	async function uploadImageByFile(file: File) {
 		const root = getStore(rootDirectory);
 		if (!root || !$openFile) return { success: 0, file: { url: '' } };
@@ -162,7 +190,8 @@
 			parentDirHandle = await parentDirHandle.getDirectoryHandle(resolvedPath[i]);
 		}
 
-		const newImage = await FileManager.createFile(parentDirHandle, file.name);
+		const fileName = file.name ?? getRandomImageFileName(file);
+		const newImage = await FileManager.createFile(parentDirHandle, fileName);
 		if (newImage instanceof FileSystemFileHandle) {
 			const writable = await newImage.createWritable();
 			await writable.write(file);
@@ -172,18 +201,56 @@
 		return {
 			success: 1,
 			file: {
-				url: JSON.stringify({ name: file.name, path: resolvedPath })
+				url: JSON.stringify({ name: fileName, path: resolvedPath })
 			}
 		};
 	}
 
 	async function uploadImageByUrl(url: string) {
+		//https://www.ifioridiluna.it/wp-content/uploads/2017/02/33-Rose-Rosse.jpg
+		if (!url.startsWith('http')) {
+			return {
+				success: 1,
+				file: {
+					url: url
+				}
+			};
+		} else {
+			// try json parsing the url
+			try {
+				// url decode
+				const parsedFile = JSON.parse(url) as { name: string; path: string[] };
+				if (parsedFile.name && parsedFile.path) {
+					// get image at path
+					FileManager.getImgeFromPathAndName(parsedFile.path, parsedFile.name).then((image) => {
+						if (image && image instanceof FileSystemFileHandle) {
+							image.getFile().then((file) => {
+								const url = URL.createObjectURL(file);
+								return {
+									success: 1,
+									file: {
+										url: url
+									}
+								};
+							});
+						} else {
+							throw new Error('Image not found');
+						}
+					});
+				} else {
+					throw new Error('Invalid file url');
+				}
+			} catch (e) {
+				console.log(e);
+			}
+		}
 		return {
-			success: 1,
+			success: 0,
 			file: {
-				url: url
+				url: ''
 			}
 		};
+		
 	}
 
 	async function loadFile() {
