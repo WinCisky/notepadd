@@ -49,6 +49,9 @@ class MonacoCodeTool {
             this.monacoEditor = monaco.editor.create(container, {
                 value: this.data.code || '// type your code...',
                 language: this.data.language || 'plaintext',
+                scrollbar: {
+                    alwaysConsumeMouseWheel: false
+                },
             });
             monaco.editor.setTheme('vs-dark');
             this.languages = monaco.languages.getLanguages().map((lang: languages.ILanguageExtensionPoint) => lang.id);
