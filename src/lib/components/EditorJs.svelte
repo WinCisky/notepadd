@@ -5,13 +5,13 @@
 	import { get as getStore } from 'svelte/store';
 
 	import EditorJS, { type ToolConstructable } from '@editorjs/editorjs';
-	import Header from '@editorjs/header';
 	import NestedList from '@editorjs/nested-list';
 	import Checklist from '@editorjs/checklist';
 	import InlineCode from '@editorjs/inline-code';
 	import ImageTool from '@editorjs/image';
 	import { FileManager, type TreeNode } from '$lib/filemanager';
 	import MonacoCodeTool from '$lib/monaco';
+	import HeaderTool from '$lib/header';
 
 	class LocalImageTool extends ImageTool {
 		set image(file: { url: string }) {
@@ -87,10 +87,9 @@
 		tools: {
 			header: {
 				// @ts-ignore
-				class: Header,
+				class: HeaderTool,
 				config: {
 					levels: [1, 2, 3],
-					defaultLevel: 1
 				}
 			},
 			nestedList: NestedList,
