@@ -15,9 +15,16 @@ class MonacoCodeTool {
     private monacoEditor: editor.IStandaloneCodeEditor | null = null;
     private languages: string[] = [];
     private container: HTMLElement | null = null;
+    private shouldFocus: boolean = false;
 
     constructor({ data }: { data: MonacoEditorData }) {
-        this.data = data || { code: '', language: '', height: 1, wordwrap: false, minimap: true};
+        const isNew = Object.values(data).length === 0;
+        this.data = isNew 
+            ? { code: '', language: '', height: 1, wordwrap: true, minimap: false} 
+            : data;
+        if (isNew) {
+            this.shouldFocus = true;
+        }
         this.codeElement = document.createElement('code');
     }
 
@@ -70,6 +77,11 @@ class MonacoCodeTool {
                     this._updateHeight(this.monacoEditor);
                 }
             });
+
+            if (this.shouldFocus) {
+                this.monacoEditor.focus();
+                this.shouldFocus = false;
+            }
 
         });
 
