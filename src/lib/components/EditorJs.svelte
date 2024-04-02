@@ -10,7 +10,7 @@
 	import InlineCode from '@editorjs/inline-code';
 	import ImageTool from '@editorjs/image';
 	import { FileManager, type TreeNode } from '$lib/filemanager';
-	import MonacoCodeTool from '$lib/monaco';
+	import MonacoCodeTool from '@ssimo/editorjs-monaco';
 	import HeaderTool from '$lib/header';
 
 	class LocalImageTool extends ImageTool {
