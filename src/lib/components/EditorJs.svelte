@@ -310,4 +310,11 @@
 	:global(.codex-editor, .codex-editor__redactor) {
 		height: 100%;
 	}
+
+	/* hide when printing */
+	@media print {
+		:global(.ce-toolbar__actions) {
+			display: none;
+		}
+	}
 </style>
